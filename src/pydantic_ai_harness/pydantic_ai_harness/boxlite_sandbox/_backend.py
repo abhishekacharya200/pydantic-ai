@@ -61,7 +61,7 @@ from pydantic_ai_harness._workspace_provider import (
     command_argv,
     require_asyncio,
 )
-from pydantic_ai_harness._x11 import DESKTOP_IMAGE, DISPLAY, desktop_display
+from pydantic_ai_harness._x11 import DESKTOP_IMAGE, desktop_display
 from pydantic_ai_harness.computer_use import Display, SupportsDisplay
 
 if TYPE_CHECKING:
@@ -461,12 +461,10 @@ class BoxLiteSandboxBackend(WorkspaceBackend, SupportsCommands, SupportsDisplay)
         self._desktop_size = desktop_size(desktop)
         # Checked only when a new box is created: an existing box already has whatever its display needs.
         self._desktop_cannot_install = bool(self._desktop_size) and image is None and not allow_internet_access
-        if self._desktop_size:
-            # Commands see the desktop too, so a program the agent starts from the shell opens on it.
-            self._env = {'DISPLAY': DISPLAY, **self._env}
-        self._display = desktop_display(
+        self._display, self._env = desktop_display(
             self._run_argv,
             self._desktop_size,
+            self._env,
             lambda: f'BoxLite box {self._ref.id if self._ref else "(not created)"}',
         )
         self._box: _Box | None = None
