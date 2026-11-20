@@ -229,7 +229,7 @@ class ModalSandboxBackend(WorkspaceBackend, SupportsCommands, SupportsFilesystem
     the foreground group without terminating the sandbox shared by other commands.
 
     With `desktop`, the sandbox gets a desktop on first use. The default image has the programs it needs; another
-    image gets them installed on first use, if it can.
+    image gets them installed then, if it can.
 
     Args:
         sandbox: A live `modal.Sandbox` you already have. Whoever created it owns terminating it.
@@ -660,7 +660,7 @@ class ModalSandboxBackend(WorkspaceBackend, SupportsCommands, SupportsFilesystem
         return await self._run_argv(argv, env=env or {}, timeout=timeout, shell=shell)
 
     def _recheck_setsid(self) -> None:
-        """Forget a "no setsid" answer once the display has started, since its start installs `setsid` when missing."""
+        """Forget a "no setsid" answer, since the display's start installs `setsid`."""
         if self._setsid_available is False:
             self._setsid_available = None
 

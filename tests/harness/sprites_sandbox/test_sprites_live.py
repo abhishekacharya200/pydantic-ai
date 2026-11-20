@@ -277,8 +277,7 @@ async def test_coder_shell_and_file_tools_run_in_the_sprite(client: AsyncSprites
 
 
 async def test_a_desktop_meets_the_display_contract(client: AsyncSpritesClient) -> None:
-    """The fakes keep the X server's state between commands: a plain Xvfb resets each time its last client exits, so
-    without `-noreset` the pointer went back to the middle after every action."""
+    """The fakes can't catch an X server that resets when its last client exits, as Xvfb does without `-noreset`."""
     async with _owned(client, desktop=True) as backend:
         display = screen(backend)
         await display.screenshot()

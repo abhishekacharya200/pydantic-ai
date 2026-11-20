@@ -48,7 +48,6 @@ async def test_a_desktop_box_runs_debian_and_the_computer_tool(
     assert any(command.endswith('mousemove 3 4 click --repeat 1 1') for command in display.xdotool)
     (start,) = display.starts
     assert start.endswith(' sh 1440x900')
-    # The desktop: its programs installed when missing, and the window manager started.
     assert 'fluxbox tint2 xterm' in start and 'setsid fluxbox' in start
     # The default Alpine image has no `apt-get` to install the display programs with.
     (box,) = fake_boxlite.boxes.values()
@@ -70,7 +69,7 @@ async def test_a_desktop_box_without_network_needs_an_image_with_the_display_pro
 async def test_a_shell_command_finds_the_desktop_running(
     fake_boxlite: FakeBoxLite, display: FakeDisplay, tmp_path: Path
 ) -> None:
-    # The shell is told a program it starts opens on the screen, before anything has looked at the screen.
+    # A program the shell starts opens on the screen, so a command starts the display.
     backend = BoxLiteSandboxBackend(
         working_dir=str(tmp_path.resolve()), desktop=True, allow_internet_access=True, env={'FOO': 'bar'}
     )

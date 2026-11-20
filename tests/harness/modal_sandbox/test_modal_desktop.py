@@ -44,7 +44,6 @@ async def test_a_desktop_capability_runs_the_computer_tool_on_a_new_sandbox(
     assert clicked.result == {'performed': 1}
     assert clicked.screenshot is not None and clicked.screenshot.data == FAKE_SCREENSHOT
     (start,) = display.starts
-    # The desktop: its programs installed when missing, and the window manager started.
     assert 'apt-get install' in start and 'fluxbox tint2 xterm' in start and 'setsid fluxbox' in start
     assert any(command.endswith('mousemove 3 4 click --repeat 1 1') for command in display.xdotool)
 
@@ -71,7 +70,7 @@ async def test_the_default_image_has_the_display_programs(fake_modal: FakeModal,
 
 
 async def test_a_shell_command_finds_the_desktop_running(fake_modal: FakeModal, display: FakeDisplay) -> None:
-    # The shell is told a program it starts opens on the screen, before anything has looked at the screen.
+    # A program the shell starts opens on the screen, so a command starts the display.
     await ModalSandboxBackend(desktop=True, env={'FOO': 'bar'}).run('xterm &', shell=True)
 
     assert len(display.starts) == 1
