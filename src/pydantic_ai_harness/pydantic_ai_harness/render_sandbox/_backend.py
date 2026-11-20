@@ -74,8 +74,8 @@ _MIN_BYTES_PER_SECOND = 256 * 1024
 _HELPER = files('pydantic_ai_harness.render_sandbox').joinpath('_file_transfer.py').read_text()
 
 _START_DISPLAY = start_x_server('/tmp/pydantic-ai-xvfb.log')
-"""Starts an X display of the size `$1` names unless one runs, installing its programs on first use: Render's
-default image runs as root on Debian and has none of them."""
+"""Render's default image runs as root on Debian with none of the display's programs, so the first start installs
+them."""
 
 
 def check_sandbox_timeout(value: int) -> None:

@@ -54,7 +54,7 @@ def display(workspace_harness: WorkspaceHarness) -> FakeDisplay:
 async def test_a_shell_command_finds_the_desktop_running(
     workspace_harness: WorkspaceHarness, display: FakeDisplay
 ) -> None:
-    # A program the agent starts from the shell opens on the screen, before anything has looked at the screen.
+    # A program the shell starts opens on the screen, so a command starts the display.
     backend = workspace_harness.backend(desktop=True, env={'FOO': 'bar'})
 
     result = await backend.run('echo "$DISPLAY $FOO"', shell=True)
@@ -160,6 +160,5 @@ async def test_a_desktop_capability_runs_the_computer_tool_on_a_new_sandbox(
     assert clicked.screenshot is not None and clicked.screenshot.data == FAKE_SCREENSHOT
     assert workspace_harness.created == ['sb-1']
     (start,) = display.starts
-    # The desktop: its programs installed when missing, and the window manager started.
     assert 'apt-get install' in start and 'fluxbox tint2 xterm' in start and 'setsid fluxbox' in start
     assert any(command.endswith('mousemove 3 4 click --repeat 1 1') for command in display.xdotool)
