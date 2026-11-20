@@ -226,9 +226,9 @@ async def main():
     print(result.output)
 ```
 
-The screen is 1280x800; pass a size such as `desktop=(1440, 900)` for another. It starts on first use with [a desktop](../computer_use/#what-the-display-needs): a panel along the bottom with a button that opens a terminal. Commands get `DISPLAY` set for it, so a program the agent starts from the shell opens on the screen.
+The screen is 1280x800; pass a size such as `desktop=(1440, 900)` for another. It starts on first use with [the desktop](../computer_use/#what-the-display-needs). Commands get `DISPLAY` set, so a program the agent starts from the shell opens on the screen.
 
-The default image has everything the desktop needs, and no web browser. A custom `image` gets [the programs it needs](../computer_use/#what-the-display-needs) on first use, if it can; add a browser to your `image` if the agent needs one.
+The default image has the desktop's programs but no web browser. A custom `image` gets them installed on first use if it can; add a browser to it if the agent needs one.
 
 The agent can type only ASCII: an action that types or presses a character such as `é` fails, and the model is told why.
 
