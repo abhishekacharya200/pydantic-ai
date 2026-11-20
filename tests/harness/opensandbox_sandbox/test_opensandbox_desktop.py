@@ -42,7 +42,7 @@ def _backend(
 async def test_a_shell_command_finds_the_desktop_running(
     server: FakeOpenSandbox, display: FakeDisplay, working_dir: str
 ) -> None:
-    # A program the agent starts from the shell opens on the screen, before anything has looked at the screen.
+    # A program the shell starts opens on the screen, so a command starts the display.
     backend = _backend(server, working_dir, desktop=True, env={'FOO': 'bar'})
 
     result = await backend.run('echo "$DISPLAY $FOO"', shell=True)
@@ -61,7 +61,6 @@ async def test_a_desktop_size_sets_the_display_it_starts(
 
     (start,) = display.starts
     assert start.endswith(' sh 1440x900')
-    # The desktop: its programs installed when missing, and the window manager started.
     assert 'fluxbox tint2 xterm' in start and 'setsid fluxbox' in start
     await backend.aclose()
 

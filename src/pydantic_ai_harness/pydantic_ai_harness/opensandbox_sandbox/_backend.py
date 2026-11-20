@@ -139,7 +139,6 @@ NETWORK_POLICY_CONFLICT = (
 )
 
 _START_DISPLAY = start_x_server('/tmp/pydantic-ai-xvfb.log')
-"""Starts an X display of the size `$1` names unless one runs, installing its programs where the image's user can."""
 
 _MAX_OUTPUT_BYTES = 10 * 1024 * 1024
 _OUTPUT_PREVIEW_CHARS = 64 * 1024
@@ -236,11 +235,8 @@ class OpenSandboxBackend(WorkspaceBackend, SupportsCommands, SupportsDisplay):
             is destroyed.
         desktop: Whether the sandbox has a display for
             [`ComputerUse`][pydantic_ai_harness.computer_use.ComputerUse]: `True` for 1280x800, or its
-            `(width, height)`. The image needs Xvfb, `xdotool`, `xwininfo` (`x11-utils`), `scrot` and `setsid`,
-            plus `fluxbox`, `tint2` and `xterm` for the desktop; without those the screen works but stays black.
-            The first use installs them with `apt-get` when the image's user is root; passwordless `sudo` works
-            only where the server allows it.
-            No port or endpoint is opened for it.
+            `(width, height)`. The first use installs the programs it needs with `apt-get` when the image's user is
+            root; passwordless `sudo` works only where the server allows it. No port or endpoint is opened for it.
     """
 
     def __init__(
