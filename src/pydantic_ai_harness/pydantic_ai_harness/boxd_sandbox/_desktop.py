@@ -91,15 +91,16 @@ wait $pid
 """
 
 # Opens boxd's own browser, agent-browser's headed Chromium, as its `agent-browser.desktop` does, and moves its window
-# below the panel and as large as the rest of the screen. It opens at the top left otherwise, over the panel. The
-# desktop puts a window back at the top left when it first shows it, at the next computer call, so the move waits for
-# that. The wait ends if the window closes.
+# below the panel, as large as the rest of the screen and on top. It opens at the top left otherwise, over the panel,
+# and nothing else raises it over a terminal. The desktop puts a window back at the top left when it first shows it,
+# at the next computer call, so the move waits for that. The wait ends if the window closes.
 _BROWSER = f"""#!/bin/sh
 agent-browser open >/dev/null || exit
 w=$(xdotool search --class Chromium-browser | tail -1)
 until xwininfo -id "$w" 2>/dev/null | grep -q IsViewable; do xwininfo -id "$w" >/dev/null 2>&1 || exit; sleep 0.1; done
 eval "$(xdotool getdisplaygeometry --shell)"
-xdotool windowmove "$w" 0 {_PANEL_HEIGHT} windowsize "$w" "$WIDTH" $((HEIGHT - {_PANEL_HEIGHT})) windowfocus "$w"
+xdotool windowmove "$w" 0 {_PANEL_HEIGHT} windowsize "$w" "$WIDTH" $((HEIGHT - {_PANEL_HEIGHT})) windowraise "$w" \\
+    windowfocus "$w"
 """
 
 _BUTTON_STYLE = (
