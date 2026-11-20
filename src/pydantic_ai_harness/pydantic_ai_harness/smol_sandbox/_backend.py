@@ -58,7 +58,7 @@ from pydantic_ai_harness._workspace_provider import (
     command_argv,
     require_asyncio,
 )
-from pydantic_ai_harness._x11 import DESKTOP_IMAGE, DISPLAY, desktop_display
+from pydantic_ai_harness._x11 import DESKTOP_IMAGE, desktop_display
 from pydantic_ai_harness.computer_use import Display, SupportsDisplay
 
 if TYPE_CHECKING:
@@ -300,12 +300,10 @@ class SmolSandboxBackend(WorkspaceBackend, SupportsCommands, SupportsDisplay):
         self._working_dir = absolute_path('working_dir', working_dir)
         self._env = dict(env or {})
         self._desktop_size = desktop_size(desktop)
-        if self._desktop_size:
-            # Commands see the desktop too, so a program the agent starts from the shell opens on it.
-            self._env = {'DISPLAY': DISPLAY, **self._env}
-        self._display = desktop_display(
+        self._display, self._env = desktop_display(
             self._run_argv,
             self._desktop_size,
+            self._env,
             lambda: f'smolvm VM {self._ref.id if self._ref else "(not created)"}',
         )
         self._machine: smol.Machine | None = None
