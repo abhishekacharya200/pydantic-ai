@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 import os
 import subprocess
+from pathlib import Path
 
 import anyio
 import pytest
@@ -30,9 +31,11 @@ from pydantic_ai.models.function import FunctionModel
 from pydantic_ai.workspaces import WorkspaceError, WorkspaceUnavailableError
 from pydantic_ai_harness.boxd_sandbox import BoxdSandbox, BoxdSandboxBackend
 from pydantic_ai_harness.boxd_sandbox._desktop import (
+    _BROWSER,  # pyright: ignore[reportPrivateUsage]
     _TERMINAL,  # pyright: ignore[reportPrivateUsage]
     INSTALL_PANEL,
     START_PANEL,
+    WRITE_PANEL_SETTINGS,
 )
 from pydantic_ai_harness.computer_use import ComputerUse, DisplayAction, UnsupportedActionError
 
@@ -270,10 +273,34 @@ async def test_a_panel_that_does_not_start_leaves_the_screen_working(
     ]
 
 
-@pytest.mark.parametrize('script', [START_PANEL, INSTALL_PANEL, _TERMINAL])
+@pytest.mark.parametrize('script', [START_PANEL, INSTALL_PANEL, _TERMINAL, _BROWSER])
 def test_the_panel_scripts_parse(script: str) -> None:
     # The fake doesn't run them, so a shell syntax error would show only on a real machine.
     subprocess.run(['/bin/sh', '-n', '-c', script], check=True)
+
+
+@pytest.mark.parametrize(
+    ('has_browser', 'buttons', 'items'),
+    [
+        (True, ['button_text = Terminal', 'button_text = Chromium'], 'panel_items = PPT'),
+        (False, ['button_text = Terminal'], 'panel_items = PT'),
+    ],
+)
+def test_the_panel_has_a_browser_button_only_when_the_machine_has_agent_browser(
+    tmp_path: Path, has_browser: bool, buttons: list[str], items: str
+) -> None:
+    bin_dir = tmp_path / 'bin'
+    bin_dir.mkdir()
+    if has_browser:
+        (bin_dir / 'agent-browser').write_text('#!/bin/sh\n')
+        (bin_dir / 'agent-browser').chmod(0o755)
+    env = {'HOME': str(tmp_path), 'PATH': f'{bin_dir}{os.pathsep}/usr/bin{os.pathsep}/bin'}
+
+    subprocess.run(['/bin/sh', '-c', WRITE_PANEL_SETTINGS], check=True, env=env)
+
+    settings = (tmp_path / '.config' / 'pydantic-ai-desktop' / 'tint2rc').read_text().splitlines()
+    assert [line for line in settings if line.startswith('button_text')] == buttons
+    assert items in settings
 
 
 async def test_looks_come_from_the_desktop(host: FakeBoxd) -> None:

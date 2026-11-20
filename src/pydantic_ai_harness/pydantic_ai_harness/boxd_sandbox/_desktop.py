@@ -90,10 +90,27 @@ until xdotool windowfocus "$w" 2>/dev/null; do kill -0 $pid 2>/dev/null || exit;
 wait $pid
 """
 
+# Opens boxd's own browser, agent-browser's headed Chromium, as its `agent-browser.desktop` does, and moves its window
+# below the panel and as large as the rest of the screen. It opens at the top left otherwise, over the panel.
+_BROWSER = f"""#!/bin/sh
+agent-browser open >/dev/null || exit
+eval "$(xdotool getdisplaygeometry --shell)"
+for w in $(xdotool search --class Chromium-browser); do
+    xdotool windowmove "$w" 0 {_PANEL_HEIGHT} windowsize "$w" "$WIDTH" $((HEIGHT - {_PANEL_HEIGHT}))
+done
+"""
+
+_BUTTON_STYLE = (
+    'button_font = Sans 12',
+    'button_font_color = #ffffff 100',
+    'button_padding = 8 4 6',
+    'button_background_id = 2',
+)
+
 # A panel along the top with a button labelled Terminal, and a button per open window. A labelled button, not
 # tint2's icon-only launcher: in live runs GPT-5.5 didn't try the bare icon until it had tried several key shortcuts.
 _TINT2RC = (
-    # Backgrounds 1 (the panel) and 2 (the button), numbered in the order they're written.
+    # Backgrounds 1 (the panel) and 2 (the buttons), numbered in the order they're written.
     'rounded = 0',
     'border_width = 0',
     'background_color = #2b2b2b 100',
@@ -102,7 +119,6 @@ _TINT2RC = (
     'border_width = 1',
     'background_color = #444444 100',
     'border_color = #888888 100',
-    'panel_items = PT',
     'panel_position = top left horizontal',
     f'panel_size = 100% {_PANEL_HEIGHT}',
     'panel_padding = 4 4 6',
@@ -110,10 +126,7 @@ _TINT2RC = (
     'button = new',
     'button_icon = mini.xterm',
     'button_text = Terminal',
-    'button_font = Sans 12',
-    'button_font_color = #ffffff 100',
-    'button_padding = 8 4 6',
-    'button_background_id = 2',
+    *_BUTTON_STYLE,
     f'button_lclick_command = {_PANEL_DIR}/terminal',
     'taskbar_padding = 2 2 4',
     'task_text = 1',
@@ -122,12 +135,31 @@ _TINT2RC = (
     'task_maximum_size = 220 34',
 )
 
+_BROWSER_BUTTON = (
+    'button = new',
+    'button_icon = web-browser',
+    'button_text = Chromium',
+    *_BUTTON_STYLE,
+    f'button_lclick_command = {_PANEL_DIR}/browser',
+)
+"""A second button, labelled with the browser's name like the Terminal one, for when the machine has agent-browser."""
+
+WRITE_PANEL_SETTINGS = (
+    f'mkdir -p "{_PANEL_DIR}" && printf %s {shlex.quote(_TERMINAL)} >"{_PANEL_DIR}/terminal" && '
+    f'printf %s {shlex.quote(_BROWSER)} >"{_PANEL_DIR}/browser" && '
+    f'chmod +x "{_PANEL_DIR}/terminal" "{_PANEL_DIR}/browser" && {{ printf "%s\\n" {shlex.join(_TINT2RC)}; '
+    # Each `P` in `panel_items` is the next button.
+    f'if command -v agent-browser >/dev/null; then printf "%s\\n" {shlex.join(_BROWSER_BUTTON)} "panel_items = PPT"; '
+    f'else echo "panel_items = PT"; fi; }} >"{_PANEL_DIR}/tint2rc"'
+)
+"""Writes the panel's settings and the scripts its buttons run, with a browser button only when the machine has
+agent-browser, so it is checked at every panel start."""
+
 START_PANEL = (
     # One start at a time, so two can't both find no panel and start two. tint2 must not hold the lock.
     f'exec >>{PANEL_LOG} 2>&1 9>/tmp/.pydantic-ai-panel.lock; ! command -v flock >/dev/null || flock 9; '
     f'command -v tint2 >/dev/null && command -v xterm >/dev/null || sudo -n sh -c {shlex.quote(INSTALL_PANEL)}; '
-    f'mkdir -p "{_PANEL_DIR}" && printf %s {shlex.quote(_TERMINAL)} >"{_PANEL_DIR}/terminal" && '
-    f'chmod +x "{_PANEL_DIR}/terminal" && printf "%s\\n" {shlex.join(_TINT2RC)} >"{_PANEL_DIR}/tint2rc" || exit; '
+    f'{WRITE_PANEL_SETTINGS} || exit; '
     f'if command -v tint2 >/dev/null && ! {_PANEL_SHOWS}; then '
     f'boxd-desktop-launch "tint2 -c {_PANEL_DIR}/tint2rc >>{PANEL_LOG} 2>&1" 9>&-; i=0; '
     f'until {_PANEL_SHOWS} || [ $i -ge 50 ]; do sleep 0.2; i=$((i+1)); done; fi; '
