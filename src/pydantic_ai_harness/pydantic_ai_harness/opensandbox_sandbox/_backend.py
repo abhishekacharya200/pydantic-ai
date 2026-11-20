@@ -58,7 +58,7 @@ from pydantic_ai_harness._workspace_provider import (
     running_on_asyncio,
     stop_shielded,
 )
-from pydantic_ai_harness._x11 import DISPLAY, start_x_server, x11_display
+from pydantic_ai_harness._x11 import desktop_display
 from pydantic_ai_harness.computer_use import Display, SupportsDisplay
 
 try:
@@ -137,8 +137,6 @@ NETWORK_POLICY_CONFLICT = (
     'pass `network_policy` or `allow_internet_access=False`, not both: '
     "`allow_internet_access=False` is `NetworkPolicy(defaultAction='deny')`"
 )
-
-_START_DISPLAY = start_x_server('/tmp/pydantic-ai-xvfb.log')
 
 _MAX_OUTPUT_BYTES = 10 * 1024 * 1024
 _OUTPUT_PREVIEW_CHARS = 64 * 1024
@@ -283,19 +281,11 @@ class OpenSandboxBackend(WorkspaceBackend, SupportsCommands, SupportsDisplay):
         self._lock = anyio.Lock()
         self._operations = 0
         self._close_after_operation = False
-        size = desktop_size(desktop)
-        if size is not None:
-            # Commands see the desktop too, so a program the agent starts from the shell opens on it.
-            self._env = {'DISPLAY': DISPLAY, **self._env}
-        self._display = (
-            None
-            if size is None
-            else x11_display(
-                self._run_argv,
-                size,
-                _START_DISPLAY,
-                lambda: f'OpenSandbox sandbox {self._ref.id if self._ref else "(not created)"}',
-            )
+        self._display, self._env = desktop_display(
+            self._run_argv,
+            desktop_size(desktop),
+            self._env,
+            lambda: f'OpenSandbox sandbox {self._ref.id if self._ref else "(not created)"}',
         )
 
     @property
