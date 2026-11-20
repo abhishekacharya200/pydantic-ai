@@ -56,8 +56,7 @@ class FakeBoxLite:
         """`(program, args, env, cwd)` for every exec, the backend's own included."""
         self.spawned: list[subprocess.Popen[bytes]] = []
         self.answer: Callable[[list[str]], tuple[str, str, int] | None] | None = None
-        """When set, answers a command (without the backend's wrapper) instead of running it, unless it returns
-        `None`."""
+        """When set, answers a command (without the backend's wrapper) instead of running it, unless it returns `None`."""
         self.runtime_error: BaseException | None = None
         """When set, `Boxlite.default()` raises it, like a runtime that can't open."""
         self.create_error: BaseException | None = None
