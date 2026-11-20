@@ -64,7 +64,7 @@ from pydantic_ai_harness._workspace_provider import (
     require_asyncio,
     run_to_completion,
 )
-from pydantic_ai_harness._x11 import DISPLAY, start_x_server, x11_display
+from pydantic_ai_harness._x11 import desktop_display
 from pydantic_ai_harness.computer_use import Display, SupportsDisplay
 
 try:
@@ -181,9 +181,6 @@ class _Session:
     commands: AsyncCommandExecutor
 
 
-_START_DISPLAY = start_x_server('/tmp/pydantic-ai-xvfb.log')
-
-
 class KubernetesSandboxBackend(WorkspaceBackend, SupportsCommands, SupportsDisplay):
     """A sandbox claimed from an agent-sandbox `SandboxWarmPool`, or attached to by its claim.
 
@@ -265,19 +262,11 @@ class KubernetesSandboxBackend(WorkspaceBackend, SupportsCommands, SupportsDispl
         # An `aclose()` that came while operations were in flight; the last of them closes the connection once.
         self._close_requested = False
         self._operations = 0
-        size = desktop_size(desktop)
-        if size is not None:
-            # Commands see the desktop too, so a program the agent starts from the shell opens on it.
-            self._env = {'DISPLAY': DISPLAY, **self._env}
-        self._display = (
-            None
-            if size is None
-            else x11_display(
-                self._run_argv,
-                size,
-                _START_DISPLAY,
-                lambda: f'Kubernetes sandbox {self._ref.id if self._ref else "(not created)"}',
-            )
+        self._display, self._env = desktop_display(
+            self._run_argv,
+            desktop_size(desktop),
+            self._env,
+            lambda: f'Kubernetes sandbox {self._ref.id if self._ref else "(not created)"}',
         )
 
     @property
