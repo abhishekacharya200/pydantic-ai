@@ -449,9 +449,8 @@ class SpritesSandboxBackend(WorkspaceBackend, SupportsCommands, SupportsFilesyst
 
     With `desktop`, `True` or a `(width, height)` (1280x800 by default), the Sprite gets a desktop for
     [`ComputerUse`][pydantic_ai_harness.computer_use.ComputerUse] on first use, which installs the programs it needs.
-    A cold wake closes the windows on it. While this backend is in use, the display restarts on the next screenshot
-    or action, and a program started from the shell before then can't open a window. A new backend, such as a later
-    run's, starts the display on its first command.
+    A cold wake closes its windows. The display restarts on the next screenshot or action, and until then a program
+    started from the shell can't open a window. A new backend starts the display on its first command.
     """
 
     def __init__(

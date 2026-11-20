@@ -47,7 +47,7 @@ async def test_a_desktop_capability_runs_the_computer_tool_on_a_new_sprite(displ
 
 
 async def test_a_shell_command_finds_the_desktop_running(display: FakeDisplay) -> None:
-    # The shell is told a program it starts opens on the screen, before anything has looked at the screen.
+    # A program the shell starts opens on the screen, so a command starts the display.
     backend = SpritesSandboxBackend(desktop=True, env={'FOO': 'bar'})
     try:
         result = await backend.run('printf %s "$DISPLAY $FOO"', shell=True)
@@ -67,7 +67,6 @@ async def test_a_desktop_size_sets_the_display_it_starts(display: FakeDisplay) -
 
     (start,) = display.starts
     assert start.endswith(' sh 1440x900')
-    # The desktop: its programs installed when missing, and the window manager started.
     assert 'fluxbox tint2 xterm' in start and 'setsid fluxbox' in start
 
 
