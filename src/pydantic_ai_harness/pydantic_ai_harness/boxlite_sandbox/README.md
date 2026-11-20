@@ -226,9 +226,9 @@ async def main():
     print(result.output)
 ```
 
-The screen is 1280x800; pass a size such as `desktop=(1440, 900)` for another. It starts on first use as a desktop: a panel along the bottom with a button that opens a terminal, and no web browser. Each window the agent opens fills the screen. Commands get `DISPLAY` set for it, so apps the agent starts from the shell open there too.
+The screen is 1280x800; pass a size such as `desktop=(1440, 900)` for another. It starts on first use with [the desktop](../computer_use/#what-the-display-needs), with no web browser. Commands get `DISPLAY` set, so a program the agent starts from the shell opens on the screen.
 
-Without an `image`, a new box runs `debian:bookworm-slim`, since BoxLite's default Alpine image has no `apt-get`. The first start installs [the desktop's programs](../computer_use/#what-the-display-needs), which needs `allow_internet_access=True` ([what that lets the box reach](#network-access)), with any `allowed_hosts` including the Debian mirrors; creating a new box without it raises `UserError`, while attaching to an existing box works. For a box without network access, pass an `image` that already has them. A new box's disk is too small for a browser: pass `box_options={'disk_size_gb': 4}` to install one.
+Without an `image`, a new box runs `debian:bookworm-slim`, since BoxLite's default Alpine image has no `apt-get`. The first start installs the desktop's programs, which needs `allow_internet_access=True` ([what that lets the box reach](#network-access)), with the Debian mirrors in any `allowed_hosts`. Creating a new box without it raises `UserError`; for a box without network access, pass an `image` that has the programs. To install a browser, pass `box_options={'disk_size_gb': 4}`: the default disk is too small.
 
 The agent can type only ASCII: an action that types or presses a character such as `é` fails, and the model is told why.
 
