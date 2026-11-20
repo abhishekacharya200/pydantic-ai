@@ -133,26 +133,22 @@ START_PANEL = (
     f'until {_PANEL_SHOWS} || [ $i -ge 50 ]; do sleep 0.2; i=$((i+1)); done; fi; '
     f'{_PANEL_SHOWS}'
 )
-"""Installs the panel and xterm unless both are there, writes the panel's settings, and starts the panel with boxd's
-`boxd-desktop-launch` unless a tint2 panel already runs, waiting up to 10 seconds for its window, which took under a
-second live. Exits 0 once the window is there. Installing needs passwordless `sudo`. A machine created with `desktop`
-also installs both from its spec at boot, and whichever install comes second waits for the first to let go of apt's
-lock."""
+"""Installs the panel and xterm unless both are there (with passwordless `sudo`), writes the panel's settings, and
+starts the panel with `boxd-desktop-launch` unless a tint2 panel already runs. Waits up to 10 seconds for its window
+(under a second live) and exits 0 once it is there. A machine created with `desktop` also installs both from its spec
+at boot; the second install waits for apt's lock."""
 
 _RELEASE_TIMEOUT = 10
 """Seconds to spend letting go of the mouse button after a drag fails or is cancelled."""
 
 _TYPED_PER_CALL = 10_000
-"""Characters typed per call. boxd takes no more."""
 
 _SCROLLED_PER_CALL = 100
-"""Most wheel clicks per `scroll` call."""
 
 _REPEATS_PER_CALL = 100
-"""Most key presses per `key` call."""
 
 _DRAG_POINTS_PER_CALL = 100
-"""Most points per `drag` call. A longer drag presses, moves and releases the button in separate calls."""
+"""A longer drag presses, moves and releases the button in separate calls."""
 
 _KEYSYMS = {
     'pause': 'Pause',

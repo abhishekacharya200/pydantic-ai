@@ -543,7 +543,7 @@ class BoxdSandboxBackend(WorkspaceBackend, SupportsCommands, SupportsFilesystem,
     async def _start_display(self, size: tuple[int, int]) -> None:
         """Start the desktop if it isn't running, and fix its screen at `size`."""
         assert self._client is not None and self._ref is not None
-        # Fixing the size makes boxd's console scale the screen instead of resizing it. Anyone in the org can open it.
+        # Fixing the size makes boxd's console scale the screen instead of resizing it.
         await self._client.machines.computer.set_screen_size(self._ref.id, *size)
         # Not started here, where a shell command would wait for its install too, but before the next screen call.
         self._panel_due = True
@@ -782,7 +782,6 @@ class BoxdSandboxBackend(WorkspaceBackend, SupportsCommands, SupportsFilesystem,
             # Acquiring the machine has its own bound; the timeout is the command's alone.
             client, machine_id = await self._acquire()
             if self._display is not None:
-                # Start the display first, so a program the command opens appears on the screen.
                 await self._display.start()
             line = _command_line(
                 argv, cwd=self._working_dir, env={**self._env, **(env or {})}, marker=self._missing_cwd_marker
