@@ -184,9 +184,9 @@ async def main():
     print(result.output)
 ```
 
-The screen is 1280x800; pass a size such as `desktop=(1440, 900)` for another. It starts on first use as a desktop: a panel along the bottom with a button that opens a terminal, and no web browser. Each window the agent opens fills the screen. Commands get `DISPLAY` set for it, so apps the agent starts from the shell open there too.
+The screen is 1280x800; pass a size such as `desktop=(1440, 900)` for another. It starts on first use with [the desktop](computer-use.md#what-the-display-needs), with no web browser. Commands get `DISPLAY` set, so a program the agent starts from the shell opens on the screen.
 
-Without an `image`, a new VM runs `debian:bookworm-slim`, since smolvm's own Alpine has no `apt-get`. The first start installs [the desktop's programs](computer-use.md#what-the-display-needs), which needs `allow_internet_access=True`: creating a new VM without it raises `UserError`, while attaching to an existing VM works. For a VM without network access, pass an `image` that already has them.
+Without an `image`, a new VM runs `debian:bookworm-slim`, since smolvm's own Alpine has no `apt-get`. The first start installs the desktop's programs, which needs `allow_internet_access=True`. Creating a new VM without it raises `UserError`; for a VM without network access, pass an `image` that has the programs.
 
 The agent can type only ASCII: an action that types or presses a character such as `é` fails, and the model is told why.
 
