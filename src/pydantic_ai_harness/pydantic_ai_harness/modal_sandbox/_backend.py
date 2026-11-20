@@ -57,7 +57,7 @@ from pydantic_ai_harness._workspace_provider import (
     safe_credential_reason,
     stop_shielded,
 )
-from pydantic_ai_harness._x11 import DESKTOP_PACKAGES, DISPLAY, desktop_display
+from pydantic_ai_harness._x11 import DESKTOP_PACKAGES, desktop_display
 from pydantic_ai_harness.computer_use import Display, SupportsDisplay
 
 # Checked without importing: importing Modal reads `~/.modal.toml`, so the import itself is
@@ -292,12 +292,10 @@ class ModalSandboxBackend(WorkspaceBackend, SupportsCommands, SupportsFilesystem
         self._working_dir = absolute_path('working_dir', working_dir)
         self._env = dict(env) if env is not None else {}
         self._desktop_size = desktop_size(desktop)
-        if self._desktop_size:
-            # Commands see the desktop too, so a program the agent starts from the shell opens on it.
-            self._env = {'DISPLAY': DISPLAY, **self._env}
-        self._display = desktop_display(
+        self._display, self._env = desktop_display(
             self._run_argv,
             self._desktop_size,
+            self._env,
             lambda: f'Modal sandbox {self._ref.id if self._ref else "(not created)"}',
             started=self._recheck_setsid,
         )

@@ -8,8 +8,10 @@ from __future__ import annotations
 
 import base64
 import os
+import re
 import shlex
 from collections.abc import Mapping
+from pathlib import Path
 
 import anyio
 import pytest
@@ -407,3 +409,43 @@ async def test_x11_computer_refuses_an_unknown_action() -> None:
 def test_a_one_colour_screenshot_is_blank() -> None:
     assert is_blank(png(4, 3))
     assert not is_blank(png(4, 3, red_box=(1, 1, 2, 2)))
+
+
+def test_every_page_that_lists_the_desktop_programs_names_them_all() -> None:
+    # Each backend's page repeats the list: one it leaves out fails on first use in an image built from the page.
+    root = Path(__file__).parents[2]
+    pages = [*root.glob('docs/harness/*.md'), *root.glob('src/pydantic_ai_harness/pydantic_ai_harness/*/README.md')]
+    texts = [(page.name, page.read_text()) for page in pages]
+    programs = [
+        (name, sentence, _x11._CLIENTS.split())  # pyright: ignore[reportPrivateUsage]
+        for name, text in texts
+        for sentence in re.split(r'(?<=\.) ', text)
+        if '`xdotool`' in sentence and '`setsid`' in sentence
+    ]
+    packages = [
+        (name, line, _x11.DESKTOP_PACKAGES)
+        for name, text in texts
+        for line in text.splitlines()
+        if 'apt-get install' in line and 'xvfb' in line
+    ]
+    assert programs
+    assert [
+        (name, [p for p in wanted if p not in listed])
+        for name, listed, wanted in [*programs, *packages]
+        if any(p not in listed for p in wanted)
+    ] == []
+
+
+async def test_a_desktop_display_starts_xvfb_and_puts_display_under_the_commands_env() -> None:
+    argvs: list[list[str]] = []
+
+    async def run(argv: list[str], /, *, env: Mapping[str, str], timeout: float) -> CommandResult:
+        argvs.append(argv)
+        return CommandResult(exit_code=0, stdout='', stderr='')
+
+    assert _x11.desktop_display(run, None, {'DISPLAY': ':9'}, str) == (None, {'DISPLAY': ':9'})
+    display, env = _x11.desktop_display(run, (8, 6), {'A': '1'}, str)
+    assert env == {'DISPLAY': _x11.DISPLAY, 'A': '1'}
+    assert display is not None
+    await display.start()
+    assert 'Xvfb' in argvs[0][2] and argvs[0][-1] == '8x6'
