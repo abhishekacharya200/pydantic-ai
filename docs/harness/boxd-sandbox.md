@@ -241,15 +241,15 @@ async def main():
     print(result.output)
 ```
 
-Machines on boxd's current default image come with a desktop. The agent controls it through boxd's computer API. A fork or snapshot of an older image has no desktop, so use a fresh machine. The desktop starts on the agent's first action and takes a few seconds.
+Machines on boxd's current default image come with a desktop. A fork or snapshot of an older image has no desktop, so use a fresh machine. The desktop starts on the agent's first action and takes a few seconds.
 
-The agent sees a panel along the top of the screen with a Terminal button, and a button for each open window. Terminal opens `xterm` below the panel, filling the rest of the screen, so an agent with `ComputerUse` alone, and no shell tool, can still run commands. `tint2` draws the panel. A new machine installs it, and `xterm`, as boxd boots it; on an attached machine, the first desktop action installs whichever is missing with `apt-get`, which needs passwordless `sudo` there. Either way the first desktop action waits for the install, which took under 30 seconds when tested. Shell commands don't wait for it. If a `tint2` panel already runs, no second one is added. If the panel doesn't start, the screen still works without it, a warning is logged, and `/tmp/pydantic-ai-desktop.log` in the machine says why.
+A panel along the top of the screen has a Terminal button, which opens `xterm`, and a button for each open window, so an agent with `ComputerUse` alone can still run commands. A new machine installs the panel (`tint2`) and `xterm` as it boots; on an attached machine, the first desktop action installs whichever is missing with `apt-get`, which needs passwordless `sudo`. The first desktop action waits for the install, which took under 30 seconds when tested. If the panel doesn't start, the screen still works, a warning is logged, and `/tmp/pydantic-ai-desktop.log` in the machine says why.
 
-boxd's desktop already acts as the window manager and draws no title bars, so a second one can't run. An app the agent starts from the shell opens where it asks to, or at the top left, and new windows open on top of older ones. Commands get `DISPLAY` set, so the programs they start open on the desktop. To open a browser, run `agent-browser open <url>`.
+boxd's desktop is its own window manager, so another can't run, and it draws no title bars. A window opens where it asks to, or at the top left, on top of older ones. Commands get `DISPLAY` set, so the programs they start open on the desktop. To open a browser, run `agent-browser open <url>`.
 
 The screen is 1280x800. For another size, pass it as `desktop=(1440, 900)`. The agent can type any text, including accented letters and emoji.
 
-Anyone in your boxd organization can watch the desktop live in the boxd console's Desktop view, and may be able to click and type on it. Everything the agent sees on the screen is visible to them. To keep a record of a run, save each screenshot as it arrives, as shown in [Watching a run](computer-use.md#watching-a-run).
+Anyone in your boxd organization can watch the desktop live in the boxd console's Desktop view, and may be able to click and type on it. To keep a record of a run, save each screenshot as it arrives, as shown in [Watching a run](computer-use.md#watching-a-run).
 
 ## Clean up
 
