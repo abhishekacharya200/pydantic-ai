@@ -14,8 +14,8 @@ WORKDIR /workspace
 # Ports and root are set by each `SandboxTemplate`, so one image serves every pool.
 ENTRYPOINT ["/usr/local/bin/sandboxd"]
 
-# `--target desktop`: the same image with the programs `desktop=True` needs and its desktop's window manager, panel
-# and terminal, installed at build time because pods run as a non-root user. `DESKTOP_EXTRA_PACKAGES` adds programs for the agent to use, such as `firefox-esr`.
+# `--target desktop`: the same image with the desktop's programs, installed at build time because pods run as a
+# non-root user. `DESKTOP_EXTRA_PACKAGES` adds programs for the agent, such as `firefox-esr`.
 FROM base AS desktop
 ARG DESKTOP_EXTRA_PACKAGES=""
 USER root

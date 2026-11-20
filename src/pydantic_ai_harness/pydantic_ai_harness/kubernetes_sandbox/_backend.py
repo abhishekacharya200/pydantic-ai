@@ -182,8 +182,6 @@ class _Session:
 
 
 _START_DISPLAY = start_x_server('/tmp/pydantic-ai-xvfb.log')
-"""Starts an X display of the size `$1` names unless one runs. Without root or passwordless `sudo` in the pod, the
-image must already have the display's programs; the script refuses, naming what is missing, when it doesn't."""
 
 
 class KubernetesSandboxBackend(WorkspaceBackend, SupportsCommands, SupportsDisplay):

@@ -389,9 +389,8 @@ async def test_a_desktop_pool_serves_the_display() -> None:
         assert 'window id' in window_manager.stdout
         panel = await backend.run(['xdotool', 'search', '--onlyvisible', '--class', 'tint2'])
         assert panel.exit_code == 0 and panel.stdout.strip()
-        # The panel's terminal button opens xterm. Under a pod's high open-file limit it once opened nothing.
-        # The labelled Terminal button comes first on the panel; (60, 780) is its centre, measured live on the Docker
-        # desktop image.
+        # Under a pod's high open-file limit, the Terminal button once opened nothing. (60, 780) is its centre,
+        # measured live on the Docker desktop image.
         await screen(backend).act(Click(x=60, y=780))
 
         async def xterm_shows() -> bool:

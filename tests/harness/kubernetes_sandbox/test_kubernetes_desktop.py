@@ -24,7 +24,7 @@ def display(cluster: FakeCluster) -> FakeDisplay:
 
 
 async def test_a_shell_command_finds_the_desktop_running(cluster: FakeCluster, display: FakeDisplay) -> None:
-    # A program the agent starts from the shell opens on the screen, before anything has looked at the screen.
+    # A program the shell starts opens on the screen, so a command starts the display.
     backend = KubernetesSandboxBackend(warm_pool='pool', desktop=True, env={'FOO': 'bar'})
 
     result = await backend.run('echo "$DISPLAY $FOO"', shell=True)
@@ -41,7 +41,6 @@ async def test_a_desktop_size_sets_the_display_it_starts(cluster: FakeCluster, d
 
     (start,) = display.starts
     assert start.endswith(' sh 1440x900')
-    # The shared start script, with the desktop's window manager started.
     assert 'fluxbox tint2 xterm' in start and 'setsid fluxbox' in start
     await backend.aclose()
 
