@@ -248,7 +248,7 @@ result = agent.run_sync('Open python.org in Firefox and tell me the latest relea
 print(result.output)
 ```
 
-The screen needs [`xdotool`, `xwininfo`, `scrot`, `setsid`, and Xvfb unless an X server is already running](../computer_use/#what-the-display-needs) in the sandbox image. The template above runs as a non-root user, so nothing is installed for you: without `xdotool`, `xwininfo`, `scrot`, `setsid` or Xvfb, the first use of the screen raises `WorkspaceUnavailableError` naming what is missing. `fluxbox`, `tint2` and `xterm` are optional: they add a desktop with a panel and a terminal, and without them the screen still works, with no panel. Build them into an image along with the programs the agent should use. Then copy the template and its pool under new names, `desktop` and `desktop-pool`, with that image in place of `python:3.12`:
+The template above runs as a non-root user, so nothing is installed for you: build [the desktop's programs](../computer_use/#what-the-display-needs) into the image, along with the programs the agent should use. Without the screen's own programs, its first use raises `WorkspaceUnavailableError` naming what is missing; without `fluxbox`, `tint2` and `xterm`, it works with no panel. Then copy the template and its pool under new names, `desktop` and `desktop-pool`, with that image in place of `python:3.12`:
 
 ```dockerfile
 FROM python:3.12
@@ -257,7 +257,7 @@ RUN apt-get update \
  && rm -rf /var/lib/apt/lists/*
 ```
 
-The agent sees a desktop with a panel along the bottom, whose buttons open a terminal and Firefox, and each window it opens fills the screen. It is 1280x800; pass a size such as `desktop=(1440, 900)` for another.
+With this image, the panel also has a Firefox button. The screen is 1280x800; pass a size such as `desktop=(1440, 900)` for another.
 
 The agent can type only ASCII: an action that types or presses a character such as `é` fails, and the model is told why.
 
