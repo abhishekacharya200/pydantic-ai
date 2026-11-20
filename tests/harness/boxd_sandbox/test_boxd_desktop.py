@@ -17,6 +17,8 @@ from pydantic_ai.computer_use import (
     ComputerReturnPart,
     Drag,
     HoldKeys,
+    KeyDown,
+    KeyUp,
     MouseDown,
     MouseMove,
     MouseUp,
@@ -135,6 +137,9 @@ async def test_each_action_maps_onto_boxd_calls(host: FakeBoxd, action: DisplayA
     [
         pytest.param(MouseMove(x=1, y=1, modifiers=('alt',)), id='mouse_move-holding-a-key'),
         pytest.param(Drag(path=_path(101), modifiers=('shift',)), id='long-drag-holding-a-key'),
+        # boxd's API has no call that presses a key and leaves it pressed.
+        pytest.param(KeyDown(keys=('shift',)), id='key-down'),
+        pytest.param(KeyUp(keys=('shift',)), id='key-up'),
         pytest.param(object(), id='unknown-action-type'),
     ],
 )
