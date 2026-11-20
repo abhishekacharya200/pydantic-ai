@@ -129,11 +129,11 @@ result = agent.run_sync(
 print(result.output)
 ```
 
-The agent sees [a desktop](computer-use.md#what-the-display-needs): a panel along the bottom with a button that opens a terminal, and no web browser. Render's default image has none of the desktop's programs, so the first use of the screen installs them with `apt-get`, which takes about 20 seconds. That needs `allow_internet_access`: creating a new sandbox without it raises `UserError`. You can still attach to an existing sandbox that has no internet access, but it can't download anything, so it must already have `xdotool`, `xwininfo`, `scrot`, `setsid`, and Xvfb unless an X server is already running on display `:1`, or the first use of the screen raises `WorkspaceUnavailableError` naming what's missing. Without `fluxbox`, `tint2` and `xterm` the screen still works, with no panel. To give the agent a browser or other programs, install them before the run, as in [Prepare a sandbox before the run](#prepare-a-sandbox-before-the-run) with `RenderSandboxBackend(desktop=True)`, or let the agent install them with `Shell`. The screen is 1280x800; pass a size such as `desktop=(1440, 900)` for another.
+The agent sees [the desktop](computer-use.md#what-the-display-needs), with no web browser. Render's default image has none of its programs, so the first use of the screen installs them with `apt-get`, which takes about 20 seconds and needs `allow_internet_access`: creating a new sandbox without it raises `UserError`. An existing sandbox without internet access can still be attached, but must already have the programs, or the first use of the screen raises `WorkspaceUnavailableError` naming what's missing. To give the agent a browser or other programs, install them before the run, as in [Prepare a sandbox before the run](#prepare-a-sandbox-before-the-run) with `RenderSandboxBackend(desktop=True)`, or let the agent install them with `Shell`. The screen is 1280x800; pass a size such as `desktop=(1440, 900)` for another.
 
 The agent can type only ASCII: an action that types or presses a character such as `é` fails, and the model is told why.
 
-Render sandboxes have no public URLs, and nothing is published for the screen. There's no live viewer; to watch a run, save each screenshot as it arrives, as in [Watching a run](computer-use.md#watching-a-run).
+There's no live viewer, since Render sandboxes have no public URLs. To watch a run, save each screenshot as it arrives, as in [Watching a run](computer-use.md#watching-a-run).
 
 ## Clean up
 
