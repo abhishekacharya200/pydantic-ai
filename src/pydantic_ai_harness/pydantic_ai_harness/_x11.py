@@ -464,11 +464,7 @@ def desktop_display(
     *,
     started: Callable[[], None] = lambda: None,
 ) -> LazyDisplay | None:
-    """A sandbox's desktop on Xvfb at `size`, or `None` without one.
-
-    For a sandbox with no desktop of its own: `start_x_server` installs what's missing on first use. `started` is
-    called after each start that succeeds, as for `x11_display`.
-    """
+    """A sandbox's desktop on Xvfb at `size`, or `None` without one. `started` is as for `x11_display`."""
     if size is None:
         return None
     return x11_display(run, size, _START_DESKTOP, where, started=started)

@@ -538,7 +538,6 @@ class TestRun:
         assert (await backend.run(['kill-self'], timeout=30)).exit_code == 137
 
     async def test_a_display_call_after_a_start_that_installs_setsid_uses_it(self, fake_modal: FakeModal) -> None:
-        # The display start installs `setsid`, after its own launch found it missing.
         installed = False
 
         def responder(argv: list[str], timeout: float | None) -> tuple[str, str, int]:
