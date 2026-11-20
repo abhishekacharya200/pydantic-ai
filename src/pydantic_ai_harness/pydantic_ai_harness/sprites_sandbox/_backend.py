@@ -100,7 +100,7 @@ from pydantic_ai_harness._workspace_provider import (
     safe_credential_reason,
     stop_shielded,
 )
-from pydantic_ai_harness._x11 import DISPLAY, desktop_display
+from pydantic_ai_harness._x11 import desktop_display
 from pydantic_ai_harness.computer_use import Display, SupportsDisplay
 
 try:
@@ -481,12 +481,10 @@ class SpritesSandboxBackend(WorkspaceBackend, SupportsCommands, SupportsFilesyst
         self._working_dir_pending = sandbox is None and ref is None and self._working_dir is not None
         self._env = dict(env or {})
         self._desktop_size = desktop_size(desktop)
-        if self._desktop_size:
-            # Commands see the desktop too, so a program the agent starts from the shell opens on it.
-            self._env = {'DISPLAY': DISPLAY, **self._env}
-        self._display = desktop_display(
+        self._display, self._env = desktop_display(
             self._run_argv,
             self._desktop_size,
+            self._env,
             lambda: f'Sprite {self._ref.id if self._ref else "(not created)"}',
         )
         # `working_dir` as the Sprite resolves it (`pwd -P`): the protocol reports a canonical absolute path.
