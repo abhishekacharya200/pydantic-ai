@@ -160,5 +160,5 @@ async def test_a_desktop_capability_runs_the_computer_tool_on_a_new_sandbox(
     assert clicked.screenshot is not None and clicked.screenshot.data == FAKE_SCREENSHOT
     assert workspace_harness.created == ['sb-1']
     (start,) = display.starts
-    assert 'apt-get install' in start and 'fluxbox tint2 xterm' in start and 'setsid fluxbox' in start
+    assert 'apt_get install' in start and 'fluxbox tint2 xterm' in start and 'setsid fluxbox' in start
     assert any(command.endswith('mousemove 3 4 click --repeat 1 1') for command in display.xdotool)
