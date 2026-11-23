@@ -58,75 +58,37 @@ nothing on the screen: `screenshot`, `zoom`, `cursor_position` and `wait`.
 
 ## What the model is told
 
-`ComputerUse` adds instructions that tell the model how to group actions into calls. They also tell it never to
-follow instructions shown on the screen. If the agent also has a tool that runs shell commands, such as `Shell`'s, the
-model is told two more things: a program it starts from the shell opens on the screen, and it should use the screen
-only for work that needs it.
+`ComputerUse` adds instructions on how to use the tool, including never to follow instructions shown on the screen.
 
 With `ComputerUse(defer_loading=True)`, the model sees only the capability's `description` until it chooses to load
 the tool. The description decides when the model loads it, so pass your own `description=` to change that.
 
 ## What the display needs
 
-The agent sees a desktop: a panel along the bottom with a button labelled Terminal, a button for the image's browser
-if it has one, and windows that fill the screen above it. The terminal uses a large monospace font so screenshots are
-easy to read, unless the image has its own `~/.Xdefaults` or loads X settings with `xrdb`.
+[E2B](../e2b_sandbox/#give-the-agent-a-desktop) and [Daytona](../daytona_sandbox/#give-the-agent-a-desktop) start their own desktop. On every other backend, `ComputerUse` starts a desktop
+with a panel inside the sandbox, which needs these programs:
 
-The panel shows whatever browser the image has. When the desktop first starts, it looks for `firefox-esr`, `firefox`,
-`chromium`, `chromium-browser` and `google-chrome`, in that order, and adds a button for the first one it finds,
-labelled Firefox, Chromium or Chrome. With none of them, there's no browser button. Chromium and Chrome refuse to start
-as root, or where the user can't make a user namespace, so there they get `--no-sandbox`. That turns off the browser's
-own sandbox, which keeps a web page that breaks into the browser away from the rest of the sandbox.
+- Xvfb, unless an X server is already running
+- `xdotool`
+- `xwininfo` (Debian's `x11-utils`)
+- `scrot`
+- `setsid`
+- `fluxbox`, `tint2` and `xterm`, for the windows, the panel and its terminal
 
-What each default image has:
+The first use of the display installs any that are missing with `apt-get`, as root or with passwordless `sudo`. Add
+them to your image to skip that wait. If one of the first five can't be installed, for example because the image has
+no `apt-get` or no root, the run ends with a `WorkspaceUnavailableError` naming what's missing. Without the last three,
+the screen still works, without the panel.
 
-- Docker's `DESKTOP_DOCKERFILE`: Firefox.
-- E2B and Daytona: their own XFCE desktop, with Firefox and Chrome on E2B and Chromium on Daytona.
-- boxd: agent-browser's Chrome.
-- Modal, Sprites, Render, BoxLite, smolvm, and OpenSandbox with `debian:bookworm-slim`: no browser.
-
-To add one to your own image, install it in its Dockerfile: `RUN apt-get update && apt-get install -y firefox-esr`.
-
-These programs inside the sandbox make the desktop:
-
-- Xvfb draws the screen, when no X server is running already.
-- `xdotool` moves the mouse and types.
-- `xwininfo` (in Debian's `x11-utils`) reads the screen size.
-- `scrot` takes screenshots.
-- `setsid` keeps the screen running after the command that started it ends.
-- `fluxbox` gives windows title bars and focuses the one the agent clicks.
-- `tint2` draws the panel, and `xterm` is the terminal its Terminal button opens.
-
-The first use of the display installs any that are missing with `apt-get`, as root or with passwordless `sudo`. That
-takes 20 to 60 seconds; add them to your image to skip it.
-
-If one of the first five can't be installed, because the image has no `apt-get` or no root, the run ends with a
-`WorkspaceUnavailableError` naming what's missing. If `fluxbox`, `tint2` or `xterm` can't be installed or don't
-start, the screen still works without the panel and full-screen windows, and `/tmp/pydantic-ai-desktop.log` in the
-sandbox says why. An install that fails after a working `apt-get update` isn't retried while the same programs are
-missing; delete `/tmp/pydantic-ai-desktop-install-failed` to retry it.
-
-[E2B](../e2b_sandbox/#give-the-agent-a-desktop) and [Daytona](../daytona_sandbox/#give-the-agent-a-desktop) start their own XFCE desktop instead.
+The panel has a button for the image's browser, if it has one. To add one, install it in your image, such as
+`RUN apt-get update && apt-get install -y firefox-esr`. The desktop's details may change between releases.
 
 ## Models
 
 The model has to accept images to see the screen. A model that can't gets a note in place of each screenshot, saying it wasn't sent.
 
-- Claude models on `AnthropicModel` get Anthropic's own computer use tool on the clients and models listed under
-  [Anthropic](https://pydantic.dev/docs/ai/models/anthropic/#computer-use). Other Claude models and clients get the
-  function tool.
-- GPT-5.4 (except GPT-5.4 nano), GPT-5.5, GPT-5.6 and GPT-6 get OpenAI's own computer tool when you use them
-  through `OpenAIResponsesModel` with `OpenAIProvider` or `BedrockMantleProvider`. See [OpenAI](https://pydantic.dev/docs/ai/models/openai/#native-tools).
-- Every other model gets `computer` as a regular function tool.
-
-An Azure client gets the function tool too. The Pydantic AI Gateway's OpenAI route uses `OpenAIProvider`, so it gets
-OpenAI's tool. Pydantic AI checks the provider class, not the server it calls. If you point
-`OpenAIProvider(base_url=...)` at a server that doesn't support the computer tool, such as Ollama or vLLM, remove it in
-the model's `profile=` argument:
-`profile=lambda p: {**p, 'supported_native_tools': p['supported_native_tools'] - {ComputerTool}}`. To send it through
-another provider whose server supports it, use `| {ComputerTool}` instead. Start from the model's profile like this,
-since a new `supported_native_tools` set replaces all of the model's native tools. Setting it in the provider's profile
-has no effect.
+On the models listed under [OpenAI](https://pydantic.dev/docs/ai/models/openai/#computer-use) and [Anthropic](https://pydantic.dev/docs/ai/models/anthropic/#computer-use), the model
+gets its provider's own computer use tool. Every other model gets `computer` as a regular function tool.
 
 ## Computer use, Playwright, or Browser Use
 
@@ -140,8 +102,8 @@ has no effect.
 
 | Setting | Default | What it does |
 |---|---|---|
-| `settle_seconds` | `2` | How long, at most, to wait for the screen to stop changing after the actions run. `ComputerUse` takes screenshots until two in a row match. `0` takes the screenshot at once. |
-| `native` | `True` | If the model's provider has its own computer use tool, the model gets that tool instead: `ComputerUse` adds a `ComputerTool` and runs its calls on the screen. `False` gives every model the `computer` function tool with all its actions. On GPT, that adds zoom, triple-click, holding keys, pressing or releasing a mouse button, and reading the pointer position. |
+| `settle_seconds` | `2` | How long, at most, to wait for the screen to stop changing after the actions run. `0` takes the screenshot at once. |
+| `native` | `True` | If the model's provider has its own computer use tool, the model gets that tool instead: `ComputerUse` adds a `ComputerTool` and runs its calls on the screen. `False` gives every model the `computer` function tool with all its actions. |
 
 Every request sends all the earlier screenshots again, so `ComputerUse` turns on
 [prompt caching](https://pydantic.dev/docs/ai/capabilities/caching/) to make that cheaper. To turn caching off, set `cache=False` in the model
@@ -171,20 +133,10 @@ async def ask_before_acting(ctx, *, call, tool_def, args):
 
 The same hook can refuse a call instead, such as one that waits longer or types more than you allow. [Raise `ToolFailed`](https://pydantic.dev/docs/ai/core-concepts/hooks/#triggering-retries-with-modelretry) with a message for the model. None of the call's actions run.
 
-Some providers flag an action for a person to confirm, and give their reason in the call's
-[`confirmation`](https://pydantic.dev/docs/ai/api/pydantic-ai/computer_use/#pydantic_ai.computer_use.ComputerCallPart.confirmation). `ComputerUse` asks for approval of
-such a call without a hook: the tool raises `ApprovalRequired` before it does anything, so no hook can skip it,
-with the reason in the request's `metadata` as `{'reason': ...}`. A hook like the one above runs first and asks
-without the reason. Once you approve the call, its result has `confirmed` set, so the provider is told a person
-approved it. A flagged call fails the run unless the agent has `DeferredToolRequests` in its `output_type` or a
-`HandleDeferredToolCalls` handler.
-
 ## Screen size
 
-A 1280x800 screen suits every model, and `ComputerUse` sends each screenshot at the screen's full size. A larger
-screen shows more at once, but each screenshot costs more tokens, and every request sends every earlier screenshot
-again: a 1920x1080 screenshot costs about twice as much as a 1280x800 one. Below about 1024x768, models start to miss
-detail.
+A 1280x800 screen suits every model. `ComputerUse` sends each screenshot at the screen's full size, so a larger screen
+costs more tokens per screenshot. Below about 1024x768, models start to miss detail.
 
 The providers' own advice:
 
@@ -196,20 +148,13 @@ The providers' own advice:
   For each model's image size limits, see
   [Images and vision](https://developers.openai.com/api/docs/guides/images-vision#model-sizing-behavior).
 
-On `AnthropicModel`, what happens to a screenshot too large for Claude depends on the tool it goes through
+On `AnthropicModel`, a screenshot larger than the model's image size limit fails or misses
 ([computer use tool](https://platform.claude.com/docs/en/agents-and-tools/tool-use/computer-use-tool)):
 
 - Claude's `computer_toolset_20260801` tool refuses a screenshot over 2576 pixels on its longer side or over 4784 image
-  tokens, where one token covers 28x28 pixels. A 2549x1457 screen is refused. The request fails with Anthropic's 400
-  as a `ModelHTTPError`, which `FallbackModel` and the `ModelFallback` capability move on from.
-- The older computer use tools, such as Claude Haiku 4.5's `computer_20250124`, and `ComputerUse(native=False)` on any
-  Claude model, shrink a larger screenshot without saying so. Claude then gives positions on the smaller image, so its
-  clicks miss: Haiku 4.5 at 1920x1080 clicked at three quarters of the right position, and Claude Sonnet 5.5 through
-  the function tool at 2560x1600 missed a button by about 100 pixels. Keep the screen at a size that fits: Haiku 4.5
-  clicked on target at 1280x800, and Sonnet 5.5 through the function tool at 1920x1200.
-
-GPT-5.5 clicks accurately on screens up to 1920x1200, and GPT-5.4 on screens up to 2048x1280. On a larger screen,
-they can miss what they click.
+  tokens, where one token covers 28x28 pixels. The request fails with a `ModelHTTPError`.
+- The older computer use tools, and `ComputerUse(native=False)` on any Claude model, shrink a larger screenshot without
+  saying so, so Claude's clicks miss. Keep the screen within the model's limit.
 
 ## When something goes wrong
 
@@ -218,8 +163,8 @@ they can miss what they click.
 - If any action in a call has a position outside the screen, none of the call's actions run, and the model is asked to
   try again. Each such retry counts against the tool's retry limit.
 - If the workspace is gone, for example because its sandbox was deleted, the run ends with [`WorkspaceUnavailableError`](https://pydantic.dev/docs/ai/api/pydantic-ai/workspaces/#pydantic_ai.workspaces.WorkspaceUnavailableError).
-- Several agents can share one screen, such as sub-agents running in parallel. If they run in the same `asyncio` event loop, they take turns one whole call at a time, so their clicks never mix. Agents in separate event loops or separate processes don't wait for each other.
-- A mouse button pressed with `mouse_down` stays pressed across calls until a `mouse_up`, and each result tells the model which buttons are still pressed. `ComputerUse` releases them when a call fails or is cancelled while it acts on the screen, and when the run ends, so a drag must finish within one run, approvals included. If the model loads `ComputerUse` during the run, because of `defer_loading=True`, the buttons are released at the end of every call, so a drag must happen within one call. If a release after a failed call fails too, the result says the button may still be pressed.
+- Agents that share one screen in the same `asyncio` event loop, such as parallel sub-agents, take turns one call at a time. Agents in separate event loops or processes don't wait for each other.
+- A mouse button pressed with `mouse_down` stays pressed until a `mouse_up`, and is released when a call fails or the run ends, so a drag must finish within one run. With `defer_loading=True`, buttons are released at the end of every call.
 
 ## Watching a run
 
@@ -236,7 +181,7 @@ Each call that finishes with a screenshot also sends one
 
 On Temporal, event listeners run in workflow code, so they [run again when Temporal replays the workflow](https://pydantic.dev/docs/ai/capabilities/durable_execution/temporal/#choosing-what-to-publish).
 The message history holds the same record. Each result is a `ComputerReturnPart`, and its `result` is the call's
-`ComputerResult`. `ComputerUse` adds no tracing spans of its own, because the tool call already has one.
+`ComputerResult`.
 
 ## Limitations
 
