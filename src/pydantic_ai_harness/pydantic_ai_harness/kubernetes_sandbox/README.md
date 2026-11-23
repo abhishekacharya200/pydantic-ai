@@ -235,20 +235,11 @@ sandbox = KubernetesSandbox(
 
 ## Give the agent a desktop
 
-Pass `desktop=True` for a sandbox with a screen, which [`ComputerUse`](../computer_use/) lets the agent see and control:
+Pass `desktop=True` and add [`ComputerUse`](../computer_use/):
+`capabilities=[KubernetesSandbox(warm_pool='desktop-pool', desktop=True), ComputerUse()]`. The screen is 1280x800;
+pass a size such as `desktop=(1440, 900)` for another.
 
-```python {test="skip"}
-from pydantic_ai import Agent
-from pydantic_ai_harness import ComputerUse, Shell
-from pydantic_ai_harness.kubernetes_sandbox import KubernetesSandbox
-
-agent = Agent('anthropic:claude-opus-5-5', capabilities=[KubernetesSandbox(warm_pool='desktop-pool', desktop=True), Shell(), ComputerUse()])
-
-result = agent.run_sync('Open python.org in Firefox and tell me the latest release.')
-print(result.output)
-```
-
-The template above runs as a non-root user, so nothing is installed for you: build [the desktop's programs](../computer_use/#what-the-display-needs) into the image, along with the programs the agent should use. Without the screen's own programs, its first use raises `WorkspaceUnavailableError` naming what is missing; without `fluxbox`, `tint2` and `xterm`, it works with no panel. Then copy the template and its pool under new names, `desktop` and `desktop-pool`, with that image in place of `python:3.12`:
+The template above runs as a non-root user, so nothing is installed for you: build [the display's programs](../computer_use/#what-the-display-needs) into the image, along with the programs the agent should use. Without them, the first use of the screen raises `WorkspaceUnavailableError` naming what is missing. Then copy the template and its pool under new names, `desktop` and `desktop-pool`, with that image in place of `python:3.12`:
 
 ```dockerfile
 FROM python:3.12
@@ -257,11 +248,7 @@ RUN apt-get update \
  && rm -rf /var/lib/apt/lists/*
 ```
 
-With this image, the panel also has a Firefox button. The screen is 1280x800; pass a size such as `desktop=(1440, 900)` for another.
-
 The agent can type only ASCII: an action that types or presses a character such as `é` fails, and the model is told why.
-
-The screen opens no port, and its X server accepts no network connections. There's no live viewer; to watch a run, save each screenshot as it arrives, as in [Watching a run](../computer_use/#watching-a-run).
 
 ## Clean up
 
