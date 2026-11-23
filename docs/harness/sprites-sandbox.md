@@ -180,7 +180,7 @@ async def main():
 
 The screen is 1280x800; pass a size such as `desktop=(1440, 900)` for another. It starts on first use, which installs [the desktop](computer-use.md#what-the-display-needs) with `apt-get` and can take a minute. There's no web browser. Commands get `DISPLAY` set, so a program the agent starts from the shell opens on the screen.
 
-A [cold wake](https://docs.fly.io/sprites/concepts/lifecycle.md) stops the display and closes the agent's windows; files on disk are kept. Within the same run, the display restarts on the agent's next screenshot or action, and until then a program started from the shell can't open a window. A later run's first command starts the display.
+A [cold wake](https://docs.fly.io/sprites/concepts/lifecycle.md) stops the display and closes the agent's windows; files on disk are kept. The display restarts on the agent's next action.
 
 The agent can type only ASCII: an action that types or presses a character such as `é` fails, and the model is told why.
 
