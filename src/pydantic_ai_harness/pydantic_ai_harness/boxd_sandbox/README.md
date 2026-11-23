@@ -244,11 +244,7 @@ async def main():
     print(result.output)
 ```
 
-Machines on boxd's current default image come with a desktop. A fork or snapshot of an older image has no desktop, so use a fresh machine. The desktop starts on the agent's first action and takes a few seconds.
-
-A panel along the top of the screen has a Terminal button, which opens `xterm`, a Chromium button, which opens boxd's own browser (agent-browser's Chromium) below the panel, and a button for each open window, so an agent with `ComputerUse` alone can still run commands. A new machine installs the panel (`tint2`) and `xterm` as it boots; on an attached machine, the first desktop action installs whichever is missing with `apt-get`, which needs passwordless `sudo`. The first desktop action waits for the install, which took under 30 seconds when tested. If the panel doesn't start, the screen still works, a warning is logged, and `/tmp/pydantic-ai-desktop.log` in the machine says why.
-
-boxd's desktop is its own window manager, so another can't run, and it draws no title bars. A window opens where it asks to, or at the top left, on top of older ones. Commands get `DISPLAY` set, so the programs they start open on the desktop. The Chromium button shows only on a machine that has `agent-browser`, as boxd's default image does. From a shell, `agent-browser open <url>` or `xdg-open <url>` opens a URL in that same browser window.
+Machines on boxd's current default image come with a desktop. A fork or snapshot of an older image has none, so use a fresh machine. The desktop starts on the agent's first action, with a panel that opens a terminal and boxd's Chromium browser. On an attached machine, that first action installs the panel and terminal if they are missing, with `apt-get` and passwordless `sudo`. If the panel doesn't start, the screen still works and a warning is logged. Commands get `DISPLAY` set, so the programs they start open on the desktop.
 
 The screen is 1280x800. For another size, pass it as `desktop=(1440, 900)`. The agent can type any text, including accented letters and emoji.
 
