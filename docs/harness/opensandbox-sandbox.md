@@ -228,34 +228,15 @@ Pass the backend as `workspace=`, as in [Prepare a sandbox before the run](#prep
 
 ## Give the agent a desktop
 
-Pass `desktop=True` for a sandbox with a screen, which [`ComputerUse`](computer-use.md) lets the agent see and control:
+Pass `desktop=True` and add [`ComputerUse`](computer-use.md):
+`capabilities=[OpenSandbox(image='debian:bookworm-slim', desktop=True), ComputerUse()]`. The screen is 1280x800;
+pass a size such as `desktop=(1440, 900)` for another.
 
-```python {test="skip"}
-from pydantic_ai import Agent
-from pydantic_ai_harness import ComputerUse, Shell
-from pydantic_ai_harness.opensandbox_sandbox import OpenSandbox
-
-agent = Agent('{{ anthropic:large }}', capabilities=[OpenSandbox(image='debian:bookworm-slim', desktop=True), Shell(), ComputerUse()])
-
-result = agent.run_sync(
-    'Install Firefox with `apt-get install -y firefox-esr`, open python.org in it and tell me the latest release.'
-)
-print(result.output)
-```
-
-The agent sees [the desktop](computer-use.md#what-the-display-needs), with no web browser. The screen is 1280x800; pass a size such as `desktop=(1440, 900)` for another.
-
-When the image's user is root, the first use installs the desktop's programs that are missing with `apt-get`, which needs the sandbox to reach the package repositories. Passwordless `sudo` works only where the server allows it: the Docker runtime's default `no_new_privileges = true` blocks it. Otherwise build them into the image: without the screen's programs the first use raises `WorkspaceUnavailableError` naming what is missing, and without the desktop's the screen works but stays black.
-
-To give the agent a browser or other programs, install them in the image or before the run, as in [Prepare a sandbox before the run](#prepare-a-sandbox-before-the-run) with `OpenSandboxBackend(..., desktop=True)`, or let the agent install them with `Shell`.
-
-Use execd 1.2 or later: on older versions every screen action is slow.
-
-On the Docker runtime, set `network_mode = "bridge"` under `[docker]` in the server's configuration; see [Security model](#security-model).
-
-The agent can type only ASCII: an action that types or presses a character such as `é` fails, and the model is told why.
-
-The screen opens no port and no endpoint, and its X server accepts no network connections. There's no live viewer; to watch a run, save each screenshot as it arrives, as in [Watching a run](computer-use.md#watching-a-run).
+- When the image's user is root, the first use installs [the display's programs](computer-use.md#what-the-display-needs) that are missing with `apt-get`, which needs the sandbox to reach the package repositories. Passwordless `sudo` works only where the server allows it: the Docker runtime's default `no_new_privileges = true` blocks it. Otherwise build them into the image: without the screen's programs the first use raises `WorkspaceUnavailableError` naming what is missing, and without the desktop's the screen works but stays black.
+- On the Docker runtime, set `network_mode = "bridge"` under `[docker]` in the server's configuration; see [Security model](#security-model).
+- Use execd 1.2 or later: on older versions every screen action is slow.
+- There's no web browser. Install one in the image or before the run, as in [Prepare a sandbox before the run](#prepare-a-sandbox-before-the-run) with `OpenSandboxBackend(..., desktop=True)`, or let the agent install it with `Shell`.
+- The agent can type only ASCII: an action that types or presses a character such as `é` fails, and the model is told why.
 
 ## Clean up
 
