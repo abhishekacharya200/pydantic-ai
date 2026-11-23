@@ -252,7 +252,7 @@ When the image's user is root, the first use installs the desktop's programs tha
 
 To give the agent a browser or other programs, install them in the image or before the run, as in [Prepare a sandbox before the run](#prepare-a-sandbox-before-the-run) with `OpenSandboxBackend(..., desktop=True)`, or let the agent install them with `Shell`.
 
-Every screen action is a command, so use execd 1.2 or later: older versions take about a second per command.
+Use execd 1.2 or later: on older versions every screen action is slow.
 
 On the Docker runtime, set `network_mode = "bridge"` under `[docker]` in the server's configuration; see [Security model](#security-model).
 
@@ -325,7 +325,7 @@ The sandbox's isolation is the server's runtime: a Docker container shares the h
 | `sandbox_timeout` | Seconds a sandbox may go unused before the server deletes it, files included; every operation renews it, and a single command must finish within it. Default: `None`, kept until destroyed. |
 | `working_dir` | Absolute directory commands start in and relative paths resolve against, created on first use if missing. Default: `/workspace`; `None` uses the image's own. |
 | `env` | Environment variables every command gets. Default: `None`. Nothing from your machine's environment reaches the sandbox, and `env` is kept out of the capability's `repr`, but the agent's commands can read it. |
-| `desktop` | Give the sandbox a graphical display for [`ComputerUse`](../computer_use/): `True` for 1280x800, or its `(width, height)`. The first use installs the screen's programs with `apt-get` when the image's user is root; passwordless `sudo` works only where the server allows it. The size applies when the display first starts, and a reattached sandbox keeps its display's size. Default: `False`. |
+| `desktop` | Give the sandbox a graphical display for [`ComputerUse`](../computer_use/): `True` for 1280x800, or its `(width, height)`. The first use installs the screen's programs with `apt-get` when the image's user is root; passwordless `sudo` works only where the server allows it. The size applies when the display first starts. Default: `False`. |
 | `authority` | The [authority](https://pydantic.dev/docs/ai/core-concepts/workspace/#workspace-authority) of the sandbox's files: `'none'` for files nobody on your side wrote, such as a cloned third-party repository, `'user'` for the user's own. The workspace reports it through `authority_of`, and a capability that checks it sends a file's text to the model with no more authority than that. Default: `'operator'`. |
 | `path_authority` | Levels for some directories and files, overriding `authority` for the paths under them; the longest matching path wins. Paths are sandbox paths, relative to the working directory or absolute; `~` isn't expanded. Default: `None`. |
 
