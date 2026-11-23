@@ -119,19 +119,12 @@ document.addEventListener('contextmenu', e => e.preventDefault());
 </script>"""
 
 # Each key name the driver takes, with the key Chromium gets for it.
-_KEY_CODES: dict[str, str | None] = {
+_KEY_CODES: dict[str, str] = {
     **{'enter': 'Enter', 'escape': 'Escape', 'tab': 'Tab', 'backspace': 'Backspace', 'delete': 'Delete'},
     **{'insert': 'Insert', 'home': 'Home', 'end': 'End', 'pageup': 'PageUp', 'pagedown': 'PageDown'},
     **{'up': 'ArrowUp', 'down': 'ArrowDown', 'left': 'ArrowLeft', 'right': 'ArrowRight', 'space': 'Space'},
     **{'printscreen': 'PrintScreen', 'pause': 'Pause', 'menu': 'ContextMenu', 'capslock': 'CapsLock'},
     **{'numlock': 'NumLock', 'scrolllock': 'ScrollLock', **{f'f{n}': f'F{n}' for n in range(1, 13)}},
-    # Chromium can't name F13 to F24 on this desktop, so `None` checks only that a key arrives.
-    **{f'f{n}': None for n in range(13, 25)},
-    **{f'numpad{n}': f'Numpad{n}' for n in range(10)},
-    **{'numpad_enter': 'NumpadEnter', 'numpad_add': 'NumpadAdd', 'numpad_subtract': 'NumpadSubtract'},
-    **{'numpad_multiply': 'NumpadMultiply', 'numpad_divide': 'NumpadDivide', 'numpad_decimal': 'NumpadDecimal'},
-    **{'volumemute': 'AudioVolumeMute', 'volumeup': 'AudioVolumeUp', 'volumedown': 'AudioVolumeDown'},
-    **{'mediaplay': 'MediaPlayPause', 'medianext': 'MediaTrackNext', 'mediaprev': 'MediaTrackPrevious'},
     **{'a': 'KeyA', 'Z': 'KeyZ', '7': 'Digit7', '+': 'Equal', '!': 'Digit1', 'é': '=é', '\n': 'Enter', '\t': 'Tab'},
     **{'super': 'MetaLeft'},
 }
@@ -158,11 +151,7 @@ async def test_the_desktop_takes_every_key_name(client: boxd.AsyncBoxd) -> None:
                     got = json.loads(json.loads(logged.stdout))
             return got
 
-        missed = {
-            name: got
-            for name, code in _KEY_CODES.items()
-            if not (got := await pressed(name)) or (code is not None and code not in got)
-        }
+        missed = {name: got for name, code in _KEY_CODES.items() if code not in (got := await pressed(name))}
         assert missed == {}
         assert await pressed('ctrl', 'shift', '+') == ['ControlLeft', 'ShiftLeft', 'Equal']
 
@@ -190,7 +179,7 @@ async def test_a_program_started_from_a_command_opens_on_the_desktop_and_takes_a
         # characters of one line.
         text = 'héllo 😀\n' + ('x' * 99 + '\n') * 101
         await display.act(TypeText(text=text))
-        await display.act(PressKeys(keys=('ctrl+d',)))
+        await display.act(PressKeys(keys=('ctrl', 'd')))
 
         with anyio.fail_after(30):
             while (typed := await backend.run(['cat', 'typed.txt'], timeout=30)).stdout.count('\n') < 102:

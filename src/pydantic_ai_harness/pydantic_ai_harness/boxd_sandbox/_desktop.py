@@ -42,6 +42,7 @@ from pydantic_ai.computer_use import (
     MouseDown,
     MouseMove,
     MouseUp,
+    NamedKey,
     Point,
     PressKeys,
     Region,
@@ -184,23 +185,10 @@ _REPEATS_PER_CALL = 100
 _DRAG_POINTS_PER_CALL = 100
 """A longer drag presses, moves and releases the button in separate calls."""
 
-_KEYSYMS = {
-    'pause': 'Pause',
-    'numlock': 'Num_Lock',
-    'scrolllock': 'Scroll_Lock',
-    **{f'numpad{n}': f'KP_{n}' for n in range(10)},
-    'numpad_enter': 'KP_Enter',
-    'numpad_add': 'KP_Add',
-    'numpad_subtract': 'KP_Subtract',
-    'numpad_multiply': 'KP_Multiply',
-    'numpad_divide': 'KP_Divide',
-    'numpad_decimal': 'KP_Decimal',
-    'volumemute': 'XF86AudioMute',
-    'volumeup': 'XF86AudioRaiseVolume',
-    'volumedown': 'XF86AudioLowerVolume',
-    'mediaplay': 'XF86AudioPlay',
-    'medianext': 'XF86AudioNext',
-    'mediaprev': 'XF86AudioPrev',
+_NAMED_KEYSYMS: dict[NamedKey, str] = {'pause': 'Pause', 'numlock': 'Num_Lock', 'scrolllock': 'Scroll_Lock'}
+
+_KEYSYMS: dict[str, str] = {
+    **_NAMED_KEYSYMS,
     # Sent as keys, not characters, because browsers ignore the Linefeed keysym.
     '\n': 'Return',
     '\t': 'Tab',

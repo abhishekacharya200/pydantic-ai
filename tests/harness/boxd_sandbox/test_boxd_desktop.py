@@ -93,7 +93,7 @@ def _path(points: int) -> tuple[Point, ...]:
             id='type-in-parts',
         ),
         pytest.param(
-            PressKeys(keys=('ctrl+s',), repeat=201),
+            PressKeys(keys=('ctrl', 's'), repeat=201),
             [
                 "key 'ctrl+s' repeat=100 hold_ms=0",
                 "key 'ctrl+s' repeat=100 hold_ms=0",
@@ -105,8 +105,8 @@ def _path(points: int) -> tuple[Point, ...]:
             PressKeys(keys=('\n', '\t')), ["key 'Return+Tab' repeat=1 hold_ms=0"], id='newline-and-tab-as-keys'
         ),
         pytest.param(
-            PressKeys(keys=('ctrl', '+', 'é', 'KP_Enter', 'xf86audiomute', 'f24')),
-            ["key 'ctrl+U002B+U00E9+KP_Enter+XF86AudioMute+f24' repeat=1 hold_ms=0"],
+            PressKeys(keys=('ctrl', '+', 'é', 'pause', 'f12')),
+            ["key 'ctrl+U002B+U00E9+Pause+f12' repeat=1 hold_ms=0"],
             id='keysyms',
         ),
         pytest.param(HoldKeys(keys=('shift', 'a'), seconds=1.5), ["key 'shift+a' repeat=0 hold_ms=1500"], id='hold'),
