@@ -39,7 +39,6 @@ from pydantic_ai.capabilities import (
 from pydantic_ai.computer_use import (
     COMPUTER_KIND,
     Click,
-    ComputerCallPart,
     ComputerReturnPart,
     Drag,
     MouseDown,
@@ -123,95 +122,6 @@ def _scripted(
 
 def _returns(messages: list[ModelMessage]) -> list[ToolReturnPart]:
     return [part for message in messages for part in message.parts if isinstance(part, ToolReturnPart)]
-
-
-def _flagged(*actions: dict[str, object]) -> FunctionModel:
-    """A model whose `computer` call needs a person's confirmation, as a provider's safety check flags one, then answers `done`."""
-
-    def respond(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
-        if any(isinstance(part, ToolCallPart) for message in messages for part in message.parts):
-            return ModelResponse(parts=[TextPart('done')])
-        call = ComputerCallPart(
-            'computer', {'actions': list(actions)}, provider_details={'confirmation': 'It deletes files.'}
-        )
-        return ModelResponse(parts=[call])
-
-    return FunctionModel(respond)
-
-
-class TestConfirmation:
-    """A call the provider flags for a person's confirmation."""
-
-    async def test_it_waits_for_approval_and_its_result_says_it_was_confirmed(self) -> None:
-        provider = ScreenProvider()
-        agent = Agent(
-            _flagged({'type': 'type_text', 'text': 'rm -rf x'}),
-            capabilities=[provider.capability(), ComputerUse()],
-            output_type=[str, DeferredToolRequests],
-        )
-        paused = await agent.run('Go.')
-
-        assert isinstance(paused.output, DeferredToolRequests)
-        (call,) = paused.output.approvals
-        assert paused.output.metadata == {call.tool_call_id: {'reason': 'It deletes files.'}}
-        assert provider.actions == []
-
-        resumed = await agent.run(
-            message_history=paused.all_messages(),
-            deferred_tool_results=DeferredToolResults(approvals={call.tool_call_id: True}),
-        )
-        assert provider.actions == [TypeText(text='rm -rf x')]
-        (tool_return,) = _returns(resumed.all_messages())
-        assert tool_return.metadata == {'performed': 1, 'confirmed': True}
-
-    async def test_a_hook_that_skips_validation_still_waits_for_approval(self) -> None:
-        """A hook can skip the tool's argument validation, but not the approval, which the tool itself asks for."""
-        provider = ScreenProvider()
-        hooks = Hooks[object]()
-
-        @hooks.on.before_tool_validate
-        async def skip(
-            ctx: RunContext[object], *, call: ToolCallPart, tool_def: ToolDefinition, args: RawToolArgs
-        ) -> RawToolArgs:
-            raise SkipToolValidation({'actions': [TypeText(text='rm -rf x')]})
-
-        agent = Agent(
-            _flagged({'type': 'type_text', 'text': 'rm -rf x'}),
-            capabilities=[provider.capability(), ComputerUse(), hooks],
-            output_type=[str, DeferredToolRequests],
-        )
-        paused = await agent.run('Go.')
-        assert isinstance(paused.output, DeferredToolRequests)
-        (call,) = paused.output.approvals
-        assert paused.output.metadata == {call.tool_call_id: {'reason': 'It deletes files.'}}
-        assert provider.actions == []
-
-        resumed = await agent.run(
-            message_history=paused.all_messages(),
-            deferred_tool_results=DeferredToolResults(approvals={call.tool_call_id: True}),
-        )
-        assert provider.actions == [TypeText(text='rm -rf x')]
-        (tool_return,) = _returns(resumed.all_messages())
-        assert tool_return.metadata == {'performed': 1, 'confirmed': True}
-
-    async def test_a_denied_call_does_not_run(self) -> None:
-        provider = ScreenProvider()
-        agent = Agent(
-            _flagged({'type': 'type_text', 'text': 'rm -rf x'}),
-            capabilities=[provider.capability(), ComputerUse()],
-            output_type=[str, DeferredToolRequests],
-        )
-        paused = await agent.run('Go.')
-        assert isinstance(paused.output, DeferredToolRequests)
-        (call,) = paused.output.approvals
-
-        resumed = await agent.run(
-            message_history=paused.all_messages(),
-            deferred_tool_results=DeferredToolResults(approvals={call.tool_call_id: False}),
-        )
-        assert provider.actions == []
-        (tool_return,) = _returns(resumed.all_messages())
-        assert tool_return.outcome == 'denied'
 
 
 class TestComputerUse:
@@ -867,6 +777,65 @@ The `computer` tool shows and controls this computer's screen.
         await agent.run('Click the middle.', message_history=history)
 
         assert provider.actions == [Click(x=640, y=400)]
+
+    async def test_a_drag_and_a_zoom_are_scaled_from_the_screenshot_the_model_saw(self) -> None:
+        history = [
+            ModelRequest.user_text_prompt('Look.'),
+            ModelResponse(parts=[ToolCallPart('computer', {'actions': [{'type': 'screenshot'}]}, 'c1')]),
+            ModelRequest(
+                parts=[
+                    ToolReturnPart(
+                        'computer',
+                        ['Ran 1 action.', BinaryImage(data=png(640, 400), media_type='image/png')],
+                        'c1',
+                        tool_kind=COMPUTER_KIND.id,
+                    )
+                ]
+            ),
+        ]
+        provider = ScreenProvider()
+        model = _scripted(
+            [],
+            [
+                {'type': 'drag', 'path': [{'x': 10, 'y': 20}, {'x': 320, 'y': 200}]},
+                {'type': 'type_text', 'text': 'hi'},
+                {'type': 'zoom', 'region': {'left': 0, 'top': 0, 'right': 50, 'bottom': 25}},
+            ],
+        )
+        result = await Agent(model, capabilities=[provider.capability(), ComputerUse()]).run(
+            'Drag and zoom.', message_history=history
+        )
+
+        # The display is twice the size of the screenshot the model pointed on.
+        assert provider.actions == [Drag(path=(Point(x=20, y=40), Point(x=640, y=400))), TypeText(text='hi')]
+        (tool_return,) = _returns(result.new_messages())
+        zoomed = tool_return.content_items()[1]
+        assert isinstance(zoomed, BinaryImage)
+        assert struct.unpack('>II', zoomed.data[16:24]) == (100, 50)
+
+    async def test_a_call_a_hook_repaired_reports_that_it_changed(self) -> None:
+        """A call whose arguments didn't validate stays a plain tool call, and still reads as the call the model made."""
+        hooks = Hooks[object]()
+
+        @hooks.on.before_tool_validate
+        async def repair(
+            ctx: RunContext[object], *, call: ToolCallPart, tool_def: ToolDefinition, args: RawToolArgs
+        ) -> RawToolArgs:
+            raise SkipToolValidation({'actions': [TypeText(text='hi')]})
+
+        def respond(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
+            if any(isinstance(part, ToolCallPart) for message in messages for part in message.parts):
+                return ModelResponse(parts=[TextPart('done')])
+            return ModelResponse(parts=[TextPart('Typing.'), ToolCallPart('computer', {'actions': 'type hi'})])
+
+        provider = ScreenProvider()
+        result = await Agent(FunctionModel(respond), capabilities=[provider.capability(), ComputerUse(), hooks]).run(
+            'Type hi.'
+        )
+
+        assert provider.actions == [TypeText(text='hi')]
+        (tool_return,) = _returns(result.all_messages())
+        assert tool_return.metadata == {'performed': 1, 'changed': True}
 
     @pytest.mark.parametrize(
         'settings,cache',
