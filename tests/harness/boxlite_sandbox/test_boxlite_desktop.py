@@ -94,3 +94,9 @@ async def test_a_desktop_box_reattaches_with_its_display(
     (start,) = display.starts
     assert start.endswith(' sh 1440x900')
     assert BoxLiteSandbox().backend(owner.ref).display is None
+
+
+@pytest.mark.usefixtures('fake_boxlite')
+def test_a_desktop_size_is_checked_when_the_capability_is_created() -> None:
+    with pytest.raises(UserError, match=r'`desktop` must be a `\(width, height\)` of at least 1 pixel each'):
+        BoxLiteSandbox(desktop=(0, 800))
