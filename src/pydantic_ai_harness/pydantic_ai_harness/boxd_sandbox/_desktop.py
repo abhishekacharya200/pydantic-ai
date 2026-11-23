@@ -18,8 +18,7 @@ the live display tests in `tests/harness/boxd_sandbox/test_boxd_live.py` before 
 - `type` types any Unicode text, emoji included. It types a newline as Enter and a tab as Tab. One call takes at most
   10,000 characters, and 10,000 characters take about 46 seconds.
 - `key` takes X key names (keysyms). Several joined with `+` press a combination, and `U` plus a code point presses
-  any character. It refuses the plain names `pause`, `numlock`, `scrolllock` and the numpad and media key names. It
-  also refuses a `repeat` over 100.
+  any character. It refuses the plain names `pause`, `numlock` and `scrolllock`, and a `repeat` over 100.
 - `scroll` turns at most 100 wheel clicks per call. `drag` takes 2 to 100 points.
 - Mouse buttons are `left`, `middle`, `right`, `back` and `forward`. `click`, `scroll` and `drag` hold modifier keys
   during the event. `move` can't hold modifier keys, and no call holds a key down from one call to the next.
