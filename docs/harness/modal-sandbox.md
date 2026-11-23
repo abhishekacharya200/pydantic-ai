@@ -209,29 +209,13 @@ The `finally` terminates the sandbox even when setup or the run fails. If the ta
 
 ## Give the agent a desktop
 
-Pass `desktop=True` for a sandbox with a screen, which [`ComputerUse`](computer-use.md) lets the agent see and control:
+Pass `desktop=True` and add [`ComputerUse`](computer-use.md):
+`capabilities=[ModalSandbox(desktop=True), ComputerUse()]`. The screen is 1280x800; pass a size such as
+`desktop=(1440, 900)` for another.
 
-```python {test="skip"}
-from pydantic_ai import Agent
-from pydantic_ai_harness import ComputerUse
-from pydantic_ai_harness.coder import Coder
-from pydantic_ai_harness.modal_sandbox import ModalSandbox
-
-agent = Agent('{{ anthropic:large }}', capabilities=[ModalSandbox(desktop=True), Coder(), ComputerUse()])
-
-
-async def main():
-    result = await agent.run('Open a terminal from the panel, run `uname -a` in it, and tell me what it printed.')
-    print(result.output)
-```
-
-The screen is 1280x800; pass a size such as `desktop=(1440, 900)` for another. It starts on first use with [the desktop](computer-use.md#what-the-display-needs). Commands get `DISPLAY` set, so a program the agent starts from the shell opens on the screen.
-
-The default image has the desktop's programs but no web browser. A custom `image` gets them installed on first use if it can; add a browser to it if the agent needs one.
+The default image has [the display's programs](computer-use.md#what-the-display-needs) but no web browser. A custom `image` gets them installed on first use if it can; add a browser to it if the agent needs one.
 
 The agent can type only ASCII: an action that types or presses a character such as `é` fails, and the model is told why.
-
-There's no live viewer. To watch a run, save each screenshot as it arrives; see [Watching a run](computer-use.md#watching-a-run).
 
 ## Clean up
 
