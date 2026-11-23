@@ -117,26 +117,15 @@ The `finally` terminates the sandbox even if setup or the run fails. Read any fi
 
 ## Give the agent a desktop
 
-Pass `desktop=True` for a sandbox with a screen, which [`ComputerUse`](../computer_use/) lets the agent see and control:
+Pass `desktop=True` and add [`ComputerUse`](../computer_use/):
+`capabilities=[RenderSandbox(desktop=True), ComputerUse()]`. The screen is 1280x800; pass a size such as
+`desktop=(1440, 900)` for another.
 
-```python {test="skip"}
-from pydantic_ai import Agent
-from pydantic_ai_harness import ComputerUse, Shell
-from pydantic_ai_harness.render_sandbox import RenderSandbox
+Render's default image has none of [the display's programs](../computer_use/#what-the-display-needs), so the first use of the screen installs them with `apt-get`, with no web browser. That needs `allow_internet_access`: creating a new sandbox without it raises `UserError`. An attached sandbox without internet access must already have the programs, or the first use of the screen raises `WorkspaceUnavailableError` naming what's missing.
 
-agent = Agent('anthropic:claude-opus-5-5', capabilities=[RenderSandbox(desktop=True), Shell(), ComputerUse()])
-
-result = agent.run_sync(
-    'Install Firefox with `apt-get install -y firefox-esr`, open python.org in it and tell me the latest release.'
-)
-print(result.output)
-```
-
-The agent sees [the desktop](../computer_use/#what-the-display-needs), with no web browser. Render's default image has none of its programs, so the first use of the screen installs them with `apt-get`, which needs `allow_internet_access`: creating a new sandbox without it raises `UserError`. An existing sandbox without internet access can still be attached, but must already have the programs, or the first use of the screen raises `WorkspaceUnavailableError` naming what's missing. To give the agent a browser or other programs, install them before the run, as in [Prepare a sandbox before the run](#prepare-a-sandbox-before-the-run) with `RenderSandboxBackend(desktop=True)`, or let the agent install them with `Shell`. The screen is 1280x800; pass a size such as `desktop=(1440, 900)` for another.
+To give the agent a browser or other programs, install them before the run, as in [Prepare a sandbox before the run](#prepare-a-sandbox-before-the-run) with `RenderSandboxBackend(desktop=True)`, or let the agent install them with `Shell`.
 
 The agent can type only ASCII: an action that types or presses a character such as `é` fails, and the model is told why.
-
-There's no live viewer, since Render sandboxes have no public URLs. To watch a run, save each screenshot as it arrives, as in [Watching a run](../computer_use/#watching-a-run).
 
 ## Clean up
 
