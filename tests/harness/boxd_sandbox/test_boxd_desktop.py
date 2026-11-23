@@ -30,13 +30,7 @@ from pydantic_ai.exceptions import UserError
 from pydantic_ai.models.function import FunctionModel
 from pydantic_ai.workspaces import WorkspaceError, WorkspaceUnavailableError
 from pydantic_ai_harness.boxd_sandbox import BoxdSandbox, BoxdSandboxBackend
-from pydantic_ai_harness.boxd_sandbox._desktop import (
-    _BROWSER,  # pyright: ignore[reportPrivateUsage]
-    _TERMINAL,  # pyright: ignore[reportPrivateUsage]
-    INSTALL_PANEL,
-    START_PANEL,
-    WRITE_PANEL_SETTINGS,
-)
+from pydantic_ai_harness.boxd_sandbox._desktop import INSTALL_PANEL, START_PANEL, WRITE_PANEL_SETTINGS
 from pydantic_ai_harness.computer_use import ComputerUse, DisplayAction, UnsupportedActionError
 
 from ..display_fakes import look_click_then_finish, screen
@@ -273,10 +267,19 @@ async def test_a_panel_that_does_not_start_leaves_the_screen_working(
     ]
 
 
-@pytest.mark.parametrize('script', [START_PANEL, INSTALL_PANEL, _TERMINAL, _BROWSER])
+@pytest.mark.parametrize('script', [START_PANEL, INSTALL_PANEL, WRITE_PANEL_SETTINGS])
 def test_the_panel_scripts_parse(script: str) -> None:
     # The fake doesn't run them, so a shell syntax error would show only on a real machine.
     subprocess.run(['/bin/sh', '-n', '-c', script], check=True)
+
+
+def test_the_scripts_the_panel_buttons_run_parse(tmp_path: Path) -> None:
+    subprocess.run(
+        ['/bin/sh', '-c', WRITE_PANEL_SETTINGS], check=True, env={'HOME': str(tmp_path), 'PATH': '/usr/bin:/bin'}
+    )
+
+    for button in ('terminal', 'browser'):
+        subprocess.run(['/bin/sh', '-n', str(tmp_path / '.config/pydantic-ai-desktop' / button)], check=True)
 
 
 @pytest.mark.parametrize(
