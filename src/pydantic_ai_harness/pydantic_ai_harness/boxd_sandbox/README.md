@@ -228,27 +228,13 @@ git config --global credential.https://github.com.helper '!f() { echo username=x
 
 ## Give the agent a desktop
 
-Pass `desktop=True` to give the agent the machine's desktop. Add [`ComputerUse`](../computer_use/) so the agent can see the screen and use its mouse and keyboard:
+Pass `desktop=True` and add [`ComputerUse`](../computer_use/):
+`capabilities=[BoxdSandbox(desktop=True), ComputerUse()]`. The screen is 1280x800; pass a size such as
+`desktop=(1440, 900)` for another.
 
-```python {test="skip"}
-from pydantic_ai import Agent
-from pydantic_ai_harness import ComputerUse
-from pydantic_ai_harness.boxd_sandbox import BoxdSandbox
-from pydantic_ai_harness.coder import Coder
+Machines on boxd's current default image come with a desktop, with a panel that opens a terminal and boxd's Chromium browser. A fork or snapshot of an older image has none, so use a fresh machine. On an attached machine, the first action installs the panel and terminal if they are missing, with `apt-get` and passwordless `sudo`.
 
-agent = Agent('anthropic:claude-opus-5-5', capabilities=[BoxdSandbox(desktop=True), Coder(), ComputerUse()])
-
-
-async def main():
-    result = await agent.run('Start xterm, run `uname -a` in it, and tell me what it printed.')
-    print(result.output)
-```
-
-Machines on boxd's current default image come with a desktop. A fork or snapshot of an older image has none, so use a fresh machine. The desktop starts on the agent's first action, with a panel that opens a terminal and boxd's Chromium browser. On an attached machine, that first action installs the panel and terminal if they are missing, with `apt-get` and passwordless `sudo`. If the panel doesn't start, the screen still works and a warning is logged. Commands get `DISPLAY` set, so the programs they start open on the desktop.
-
-The screen is 1280x800. For another size, pass it as `desktop=(1440, 900)`. The agent can type any text, including accented letters and emoji.
-
-Anyone in your boxd organization can watch the desktop live in the boxd console's Desktop view, and may be able to click and type on it. To keep a record of a run, save each screenshot as it arrives, as shown in [Watching a run](../computer_use/#watching-a-run).
+Anyone in your boxd organization can watch the desktop live in the boxd console's Desktop view, and may be able to click and type on it.
 
 ## Clean up
 
