@@ -209,30 +209,13 @@ The `finally` deletes the box even when setup or the run fails. To keep it inste
 
 ## Give the agent a desktop
 
-Pass `desktop=True` for a box with a screen, which [`ComputerUse`](../computer_use/) lets the agent see and control:
+Pass `desktop=True` and add [`ComputerUse`](../computer_use/):
+`capabilities=[BoxLiteSandbox(desktop=True, allow_internet_access=True), ComputerUse()]`. The screen is 1280x800;
+pass a size such as `desktop=(1440, 900)` for another.
 
-```python {test="skip"}
-from pydantic_ai import Agent
-from pydantic_ai_harness import ComputerUse
-from pydantic_ai_harness.coder import Coder
-from pydantic_ai_harness.boxlite_sandbox import BoxLiteSandbox
-
-box = BoxLiteSandbox(desktop=True, allow_internet_access=True)
-agent = Agent('anthropic:claude-opus-5-5', capabilities=[box, Coder(), ComputerUse()])
-
-
-async def main():
-    result = await agent.run('Open a terminal from the panel, run `uname -a` in it, and tell me what it printed.')
-    print(result.output)
-```
-
-The screen is 1280x800; pass a size such as `desktop=(1440, 900)` for another. It starts on first use with [the desktop](../computer_use/#what-the-display-needs), with no web browser. Commands get `DISPLAY` set, so a program the agent starts from the shell opens on the screen.
-
-Without an `image`, a new box runs `debian:bookworm-slim`, since BoxLite's default Alpine image has no `apt-get`. The first start installs the desktop's programs, which needs `allow_internet_access=True` ([what that lets the box reach](#network-access)), with the Debian mirrors in any `allowed_hosts`. Creating a new box without it raises `UserError`; for a box without network access, pass an `image` that has the programs. To install a browser, pass `box_options={'disk_size_gb': 4}`: the default disk is too small.
+Without an `image`, a new box runs `debian:bookworm-slim`, and its first start installs [the display's programs](../computer_use/#what-the-display-needs), with no web browser. That needs `allow_internet_access=True` ([what that lets the box reach](#network-access)), with the Debian mirrors in any `allowed_hosts`. Creating a new box without it raises `UserError`; for a box without network access, pass an `image` that has the programs. To install a browser, pass `box_options={'disk_size_gb': 4}`: the default disk is too small.
 
 The agent can type only ASCII: an action that types or presses a character such as `é` fails, and the model is told why.
-
-There's no live viewer. To watch a run, save each screenshot as it arrives; see [Watching a run](../computer_use/#watching-a-run).
 
 ## Clean up
 

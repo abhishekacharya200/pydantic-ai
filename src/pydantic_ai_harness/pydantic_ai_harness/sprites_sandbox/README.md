@@ -165,29 +165,14 @@ The run uses the backend as it is, so `SpritesSandbox`'s settings don't apply to
 
 ## Give the agent a desktop
 
-Pass `desktop=True` for a Sprite with a screen, which [`ComputerUse`](../computer_use/) lets the agent see and control:
+Pass `desktop=True` and add [`ComputerUse`](../computer_use/):
+`capabilities=[SpritesSandbox(desktop=True), ComputerUse()]`. The screen is 1280x800; pass a size such as
+`desktop=(1440, 900)` for another.
 
-```python {test="skip"}
-from pydantic_ai import Agent
-from pydantic_ai_harness import ComputerUse
-from pydantic_ai_harness.coder import Coder
-from pydantic_ai_harness.sprites_sandbox import SpritesSandbox
+The first use installs [the display's programs](../computer_use/#what-the-display-needs) with `apt-get`, which can take a minute. There's no web browser.
 
-agent = Agent('anthropic:claude-opus-5-5', capabilities=[SpritesSandbox(desktop=True), Coder(), ComputerUse()])
-
-
-async def main():
-    result = await agent.run('Open a terminal from the panel, run `uname -a` in it, and tell me what it printed.')
-    print(result.output)
-```
-
-The screen is 1280x800; pass a size such as `desktop=(1440, 900)` for another. It starts on first use, which installs [the desktop](../computer_use/#what-the-display-needs) with `apt-get` and can take a minute. There's no web browser. Commands get `DISPLAY` set, so a program the agent starts from the shell opens on the screen.
-
-A [cold wake](https://docs.fly.io/sprites/concepts/lifecycle.md) stops the display and closes the agent's windows; files on disk are kept. The display restarts on the agent's next screenshot or action; until then, a program started from the shell can't open a window.
-
-The agent can type only ASCII: an action that types or presses a character such as `é` fails, and the model is told why.
-
-There's no live viewer. To watch a run, save each screenshot as it arrives; see [Watching a run](../computer_use/#watching-a-run).
+- A [cold wake](https://docs.fly.io/sprites/concepts/lifecycle.md) stops the display and closes the agent's windows; files on disk are kept. The display restarts on the agent's next screenshot or action; until then, a program started from the shell can't open a window.
+- The agent can type only ASCII: an action that types or presses a character such as `é` fails, and the model is told why.
 
 ## Clean up
 
